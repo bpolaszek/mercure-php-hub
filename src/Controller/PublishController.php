@@ -1,0 +1,120 @@
+<?php
+
+namespace BenTools\MercurePHP\Controller;
+
+use BenTools\MercurePHP\Exception\Http\AccessDeniedHttpException;
+use BenTools\MercurePHP\Exception\Http\BadRequestHttpException;
+use BenTools\MercurePHP\Security\Authenticator;
+use BenTools\MercurePHP\Transport\Message;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Ramsey\Uuid\Uuid;
+use React\Http;
+
+final class PublishController extends AbstractController
+{
+    private Authenticator $authenticator;
+
+    public function __construct(Authenticator $authenticator)
+    {
+        $this->authenticator = $authenticator;
+    }
+
+    public function __invoke(ServerRequestInterface $request): ResponseInterface
+    {
+        $topicSelectors = $this->getAuthorizedTopicSelectors($request);
+        $input = (array) $request->getParsedBody();
+        $input = $this->normalizeInput($input);
+        $canDispatchPrivateUpdates = ([] !== $topicSelectors);
+
+        if ($input['private'] && !$canDispatchPrivateUpdates) {
+            throw new AccessDeniedHttpException('You are not allowed to dispatch private updates.');
+        }
+
+        $id = $input['id'] ?? (string) Uuid::uuid4();
+        $message = new Message(
+            $id,
+            $input['data'],
+            (bool) $input['private'],
+            $input['event'],
+            null !== $input['retry'] ? (int) $input['retry'] : null
+        );
+
+        $this->transport
+            ->publish($input['topic'], $message)
+            ->then(fn () => $this->storage->storeMessage($input['topic'], $message));
+
+        $this->logger()->debug(
+            \sprintf(
+                'Created message %s on topic %s',
+                $message->getId(),
+                $input['topic'],
+            )
+        );
+
+        return new Http\Response(
+            201,
+            [
+                'Content-Type' => 'text/plain',
+                'Cache-Control' => 'no-cache',
+            ],
+            $id
+        );
+    }
+
+    public function matchRequest(RequestInterface $request): bool
+    {
+        return 'POST' === $request->getMethod()
+            && '/.well-known/mercure' === $request->getUri()->getPath();
+    }
+
+    private function normalizeInput(array $input): array
+    {
+        if (!\is_scalar($input['topic'] ?? null)) {
+            throw new BadRequestHttpException('Invalid topic parameter.');
+        }
+
+        if (!\is_scalar($input['data'] ?? '')) {
+            throw new BadRequestHttpException('Invalid data parameter.');
+        }
+
+        if (isset($input['id']) && !Uuid::isValid($input['id'])) {
+            throw new BadRequestHttpException('Invalid UUID.');
+        }
+
+        $input['data'] ??= null;
+        $input['private'] ??= false;
+        $input['event'] ??= null;
+        $input['retry'] ??= null;
+
+        return $input;
+    }
+
+    private function getAuthorizedTopicSelectors(ServerRequestInterface $request): array
+    {
+        try {
+            $token = $this->authenticator->authenticate($request);
+        } catch (\RuntimeException $e) {
+            throw new AccessDeniedHttpException($e->getMessage());
+        }
+
+        if (null === $token) {
+            throw new AccessDeniedHttpException('Invalid auth token.');
+        }
+
+        try {
+            $claim = $token->getClaim('mercure');
+        } catch (\OutOfBoundsException $e) {
+            throw new AccessDeniedHttpException('Provided auth token doesn\'t contain the "mercure" claim.');
+        }
+
+        $topicSelectors = $claim->publish ?? null;
+
+        if (null === $topicSelectors || !\is_array($topicSelectors)) {
+            throw new AccessDeniedHttpException('Your are not authorized to publish on this hub.');
+        }
+
+        return $topicSelectors;
+    }
+}

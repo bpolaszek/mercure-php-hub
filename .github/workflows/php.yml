@@ -1,0 +1,46 @@
+name: CI Workflow
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Redis Server in GitHub Actions
+      uses: supercharge/redis-github-action@1.1.0
+
+    - name: Enable Composer parallel downloads
+      run: composer global require symfony/flex
+
+    - name: Validate composer.json and composer.lock
+      run: composer validate
+
+    - name: Cache Composer packages
+      id: composer-cache
+      uses: actions/cache@v2
+      with:
+        path: vendor
+        key: ${{ runner.os }}-node-${{ hashFiles('**/composer.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
+
+    - name: Install dependencies
+      if: steps.composer-cache.outputs.cache-hit != 'true'
+      run: composer install --prefer-dist --no-progress --no-suggest
+
+    - name: Run test suite
+      run: composer tests:run
+
+    - name: Check code style
+      run: composer phpcs:check
+
+    - name: Track avoidable bugs
+      run: composer phpstan:analyze
