@@ -117,9 +117,9 @@ You could probably reach a very high level of performance with better-sized serv
 | URI Templates for topics | ✅ |
 | Health check endpoint | ✅ |
 | HMAC SHA256 JWT signatures | ✅ |
+| RS512 JWT signatures | ✅ |
 | Environment variables configuration | ✅ |
 | Custom message IDs | ✅ |
-| RS512 JWT signatures | ❌️ |
 | Last event ID | ❌️ (implemented, but buggy) |
 | Subscription events | ❌️ |
 | Subscription API | ❌️ |

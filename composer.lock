@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "461072d3c97f58906bcd56b7df6266cf",
+    "content-hash": "bc5e91733cb63ed1a812548e879d2fa3",
     "packages": [
         {
             "name": "bentools/psr7-request-matcher",
@@ -2021,6 +2021,74 @@
             ],
             "description": "Provides functions for iterable variables: is_iterable(), iterable_to_array()",
             "time": "2020-05-01T07:48:02+00:00"
+        },
+        {
+            "name": "bentools/shh",
+            "version": "1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/bpolaszek/shh.git",
+                "reference": "59b29bda3ad8e958a8feb94b9d76440fccf6dd15"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/bpolaszek/shh/zipball/59b29bda3ad8e958a8feb94b9d76440fccf6dd15",
+                "reference": "59b29bda3ad8e958a8feb94b9d76440fccf6dd15",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "ext-openssl": "*",
+                "php": ">=7.1"
+            },
+            "require-dev": {
+                "bentools/cartesian-product": "^1.3",
+                "php-coveralls/php-coveralls": "2.1",
+                "phpstan/phpstan": "~0.11.5",
+                "phpunit/phpunit": "~7.0|~8.0",
+                "squizlabs/php_codesniffer": "~2.0",
+                "symfony/var-dumper": "~4.0|~5.0",
+                "thecodingmachine/safe": "^0.1.16"
+            },
+            "suggest": {
+                "bentools/shh-bundle": "Integrate Shh! into your Symfony application."
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.0.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "BenTools\\Shh\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Beno!t POLASZEK"
+                }
+            ],
+            "description": "A PHP library to encrypt/decrypt secrets using OpenSSL.",
+            "keywords": [
+                "Private Key",
+                "decrypt",
+                "decryption",
+                "encrypt",
+                "encryption",
+                "openrsa",
+                "openssl",
+                "passphrase",
+                "public key",
+                "secret",
+                "secrets",
+                "symfony"
+            ],
+            "time": "2020-01-23T13:12:38+00:00"
         },
         {
             "name": "composer/semver",
