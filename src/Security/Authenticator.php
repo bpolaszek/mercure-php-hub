@@ -74,6 +74,7 @@ final class Authenticator
     {
         $map = [
             'HS256' => new Signer\Hmac\Sha256(),
+            'RS512' => new Signer\Rsa\Sha512(),
         ];
 
         if (!isset($map[$algorithm])) {

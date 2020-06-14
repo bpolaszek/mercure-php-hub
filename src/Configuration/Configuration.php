@@ -27,9 +27,9 @@ final class Configuration
         self::JWT_KEY => null,
         self::JWT_ALGORITHM => 'HS256',
         self::PUBLISHER_JWT_KEY => null,
-        self::PUBLISHER_JWT_ALGORITHM => 'HS256',
+        self::PUBLISHER_JWT_ALGORITHM => null,
         self::SUBSCRIBER_JWT_KEY => null,
-        self::SUBSCRIBER_JWT_ALGORITHM => 'HS256',
+        self::SUBSCRIBER_JWT_ALGORITHM => null,
         self::ALLOW_ANONYMOUS => false,
     ];
 
