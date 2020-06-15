@@ -2,7 +2,7 @@
 
 namespace BenTools\MercurePHP\Metrics;
 
-use BenTools\MercurePHP\Metrics\InMemory\InMemoryMetricsHandlerFactory;
+use BenTools\MercurePHP\Metrics\PHP\PHPMetricsHandlerFactory;
 use BenTools\MercurePHP\Metrics\Redis\RedisMetricsHandlerFactory;
 use Psr\Log\LoggerInterface;
 use React\EventLoop\LoopInterface;
@@ -48,7 +48,7 @@ final class MetricsHandlerFactory implements MetricsHandlerFactoryInterface
     {
         return new self(
             [
-                new InMemoryMetricsHandlerFactory(),
+                new PHPMetricsHandlerFactory(),
                 new RedisMetricsHandlerFactory($logger),
             ]
         );

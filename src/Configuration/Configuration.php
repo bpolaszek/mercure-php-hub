@@ -19,9 +19,9 @@ final class Configuration
     public const ALLOW_ANONYMOUS = 'allow_anonymous';
     private const DEFAULT_CONFIG = [
         self::ADDR => '127.0.0.1:3000',
-        self::TRANSPORT_URL => 'php://localhost',
-        self::STORAGE_URL => 'php://localhost?size=0',
-        self::METRICS_URL => 'php://localhost',
+        self::TRANSPORT_URL => 'php://localhost?size=1000',
+        self::STORAGE_URL => null,
+        self::METRICS_URL => null,
         self::CORS_ALLOWED_ORIGINS => '*',
         self::PUBLISH_ALLOWED_ORIGINS => '*',
         self::JWT_KEY => null,

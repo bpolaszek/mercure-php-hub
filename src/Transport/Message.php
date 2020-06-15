@@ -77,7 +77,7 @@ final class Message implements \JsonSerializable
     {
         return new self(
             $event['id'],
-            $event['data'],
+            $event['data'] ?? null,
             $event['private'] ?? false,
             $event['type'] ?? null,
             $event['retry'] ?? null,

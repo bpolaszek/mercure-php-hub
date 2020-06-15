@@ -120,7 +120,7 @@ You could probably reach a very high level of performance with better-sized serv
 | RS512 JWT signatures | ✅ |
 | Environment variables configuration | ✅ |
 | Custom message IDs | ✅ |
-| Last event ID | ❌️ (implemented, but buggy) |
+| Last event ID | ✅️ (except: `earliest` on REDIS transport) |
 | Subscription events | ❌️ |
 | Subscription API | ❌️ |
 | Configuration w/ config file | ❌️ |

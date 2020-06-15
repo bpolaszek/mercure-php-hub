@@ -8,7 +8,7 @@ use BenTools\MercurePHP\Controller\HealthController;
 use BenTools\MercurePHP\Controller\PublishController;
 use BenTools\MercurePHP\Controller\SubscribeController;
 use BenTools\MercurePHP\Helpers\LoggerAwareTrait;
-use BenTools\MercurePHP\Metrics\InMemory\InMemoryMetricsHandler;
+use BenTools\MercurePHP\Metrics\PHP\PHPMetricsHandler;
 use BenTools\MercurePHP\Metrics\MetricsHandlerInterface;
 use BenTools\MercurePHP\Security\Authenticator;
 use BenTools\MercurePHP\Security\CORS;
@@ -36,17 +36,11 @@ final class Hub
     private StorageInterface $storage;
     private TransportInterface $transport;
 
-    /**
-     * @var AbstractController[]
-     */
-    private array $controllers;
-
     public function __construct(array $config, LoopInterface $loop)
     {
         $this->config = $config;
         $this->loop = $loop;
-        $this->logger = new NullLogger();
-        $this->metricsHandler = new InMemoryMetricsHandler();
+        $this->metricsHandler = new PHPMetricsHandler();
         $this->cors = new CORS($config);
     }
 
@@ -135,7 +129,7 @@ final class Hub
         $subscriberAuthenticator = Authenticator::createSubscriberAuthenticator($this->config);
         $publisherAuthenticator = Authenticator::createPublisherAuthenticator($this->config);
 
-        $this->controllers = [
+        $controllers = [
             new HealthController(),
             (new SubscribeController($this->config, $subscriberAuthenticator))
                 ->withLoop($this->loop)
@@ -151,7 +145,7 @@ final class Hub
         ];
 
         if (!isset($this->requestHandler)) {
-            $this->requestHandler = new RequestHandler($this->controllers);
+            $this->requestHandler = new RequestHandler($controllers);
         }
     }
 }

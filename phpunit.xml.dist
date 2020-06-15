@@ -8,8 +8,8 @@
         <testsuite name="Unit">
             <directory suffix="Test.php">./tests/Unit</directory>
         </testsuite>
-        <testsuite name="Functional">
-            <directory suffix="Test.php">./tests/Functional</directory>
+        <testsuite name="Integration">
+            <directory suffix="Test.php">./tests/Integration</directory>
         </testsuite>
     </testsuites>
     <filter>
@@ -18,7 +18,8 @@
         </whitelist>
     </filter>
     <php>
-        <env name="TRANSPORT_URL" value="redis://localhost" />
+        <env name="TRANSPORT_URL" value="php://localhost?size=1000" />
+        <env name="REDIS_DSN" value="redis://localhost" />
         <env name="JWT_KEY" value="AVERYSECRETKEY" />
         <env name="ADDR" value="127.0.0.1:3000" />
         <env name="ALLOW_ANONYMOUS" value="1" />

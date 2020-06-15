@@ -2,6 +2,7 @@
 
 namespace BenTools\MercurePHP\Storage\Redis;
 
+use BenTools\MercurePHP\Security\TopicMatcher;
 use BenTools\MercurePHP\Storage\StorageInterface;
 use BenTools\MercurePHP\Transport\Message;
 use Clue\React\Redis\Client as AsynchronousClient;
@@ -21,35 +22,41 @@ final class RedisStorage implements StorageInterface
         $this->sync = $syncClient;
     }
 
-    public function retrieveMessagesAfterId(string $id): PromiseInterface
+    public function retrieveMessagesAfterId(string $id, array $subscribedTopics): PromiseInterface
     {
-        return resolve($this->findNextMessages($id));
+        return resolve($this->findNextMessages($id, $subscribedTopics));
     }
 
     public function storeMessage(string $topic, Message $message): PromiseInterface
     {
         $id = $message->getId();
         $payload = \json_encode($message, \JSON_THROW_ON_ERROR);
-        $this->async->set('data:' . $id, $topic . \PHP_EOL . $payload); /** @phpstan-ignore-line */
+
         /** @phpstan-ignore-next-line */
-        $this->async
-            ->get('Last-Event-ID')
-            ->then(function (?string $lastEventId) use ($id) {
-                $this->storeLastEventId($lastEventId, $id);
-            });
-
-        return resolve($id);
+        return $this->async->set('data:' . $id, $topic . \PHP_EOL . $payload)
+            ->then(fn() => $this->getLastEventId())
+            ->then(fn(?string $lastEventId) => $this->storeLastEventId($lastEventId, $id))
+            ->then(fn() => $id);
     }
 
-    private function storeLastEventId(?string $previousEventId, string $newEventId): void
+    private function getLastEventId(): PromiseInterface
     {
-        $this->async->set('Last-Event-ID', $newEventId); /** @phpstan-ignore-line */
-        if (null !== $previousEventId) {
-            $this->async->set('next:' . $previousEventId, $newEventId); /** @phpstan-ignore-line */
-        }
+        return $this->async->get('Last-Event-ID'); /** @phpstan-ignore-line */
     }
 
-    private function findNextMessages(string $id): iterable
+    private function storeLastEventId(?string $previousEventId, string $newEventId): PromiseInterface
+    {
+        $promise = $this->async->set('Last-Event-ID', $newEventId); /** @phpstan-ignore-line */
+
+        if (null === $previousEventId) {
+            return $promise;
+        }
+
+        /** @phpstan-ignore-next-line */
+        return $promise->then(fn() => $this->async->set('next:' . $previousEventId, $newEventId));
+    }
+
+    private function findNextMessages(string $id, array $subscribedTopics): iterable
     {
         $nextId = $this->sync->get('next:' . $id);
 
@@ -76,7 +83,10 @@ final class RedisStorage implements StorageInterface
             )
         );
 
-        yield $topic => $message;
-        yield from $this->findNextMessages($message->getId()); // Sync client needed because of this
+        if (TopicMatcher::matchesTopicSelectors($topic, $subscribedTopics)) {
+            yield $topic => $message;
+        }
+
+        yield from $this->findNextMessages($message->getId(), $subscribedTopics); // Sync client needed because of this
     }
 }

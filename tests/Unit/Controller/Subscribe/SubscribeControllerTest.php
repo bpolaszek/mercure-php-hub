@@ -15,6 +15,7 @@ use Lcobucci\JWT\Signer\Hmac\Sha256;
 use Lcobucci\JWT\Signer\Key;
 use Lcobucci\JWT\Token;
 use Psr\Http\Message\ServerRequestInterface;
+use React\EventLoop\Factory;
 use RingCentral\Psr7\ServerRequest;
 use RingCentral\Psr7\Uri;
 
@@ -25,7 +26,9 @@ function createController(Configuration $configuration, ?Authenticator $authenti
 
     return (new SubscribeController($config, $authenticator))
         ->withTransport(new NullTransport())
-        ->withStorage(new NullStorage());
+        ->withStorage(new NullStorage())
+        ->withLoop(Factory::create())
+        ;
 }
 
 function createJWT(array $claims, string $key, ?int $expires = null): Token
