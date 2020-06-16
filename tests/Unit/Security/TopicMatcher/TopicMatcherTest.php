@@ -211,3 +211,11 @@ test(
 test('all combinations have been tested', function () use ($combinations, &$counter) {
     \assertEquals(\count($combinations), $counter);
 });
+
+test('the * selector opens all the gates', function () {
+    $token = createMercureJWT('foo', ['subscribe' => ['*']]);
+    \assertTrue(TopicMatcher::matchesTopicSelectors('/foo', ['*']));
+    \assertTrue(TopicMatcher::matchesTopicSelectors('/foo/{bar}', ['*']));
+    \assertTrue(TopicMatcher::canSubscribeToTopic('/foo', $token, false));
+    \assertTrue(TopicMatcher::canReceiveUpdate('/foo', new Message('foo'), ['/foo'], $token, false));
+});

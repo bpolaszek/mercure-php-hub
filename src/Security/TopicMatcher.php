@@ -15,6 +15,10 @@ final class TopicMatcher
             return true;
         }
 
+        if (\in_array('*', $topicSelectors, true)) {
+            return true;
+        }
+
         foreach ($topicSelectors as $topicSelector) {
             if (self::matchesUriTemplate($topic, $topicSelector)) {
                 return true;
