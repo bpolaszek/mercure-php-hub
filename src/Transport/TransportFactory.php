@@ -2,7 +2,7 @@
 
 namespace BenTools\MercurePHP\Transport;
 
-use BenTools\MercurePHP\Transport\InMemory\InMemoryTransportFactory;
+use BenTools\MercurePHP\Transport\PHP\PHPTransportFactory;
 use BenTools\MercurePHP\Transport\Redis\RedisTransportFactory;
 use Psr\Log\LoggerInterface;
 use React\EventLoop\LoopInterface;
@@ -49,7 +49,7 @@ final class TransportFactory implements TransportFactoryInterface
         return new self(
             [
                 new RedisTransportFactory($logger),
-                new InMemoryTransportFactory(),
+                new PHPTransportFactory(),
             ]
         );
     }

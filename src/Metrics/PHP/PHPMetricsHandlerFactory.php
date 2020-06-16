@@ -1,14 +1,15 @@
 <?php
 
-namespace BenTools\MercurePHP\Metrics\InMemory;
+namespace BenTools\MercurePHP\Metrics\PHP;
 
 use BenTools\MercurePHP\Metrics\MetricsHandlerFactoryInterface;
+use BenTools\MercurePHP\Metrics\PHP\PHPMetricsHandler;
 use React\EventLoop\LoopInterface;
 use React\Promise\PromiseInterface;
 
 use function React\Promise\resolve;
 
-final class InMemoryMetricsHandlerFactory implements MetricsHandlerFactoryInterface
+final class PHPMetricsHandlerFactory implements MetricsHandlerFactoryInterface
 {
     public function supports(string $dsn): bool
     {
@@ -17,6 +18,6 @@ final class InMemoryMetricsHandlerFactory implements MetricsHandlerFactoryInterf
 
     public function create(string $dsn, LoopInterface $loop): PromiseInterface
     {
-        return resolve(new InMemoryMetricsHandler());
+        return resolve(new PHPMetricsHandler());
     }
 }

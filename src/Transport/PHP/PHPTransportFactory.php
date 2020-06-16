@@ -1,7 +1,8 @@
 <?php
 
-namespace BenTools\MercurePHP\Transport\InMemory;
+namespace BenTools\MercurePHP\Transport\PHP;
 
+use BenTools\MercurePHP\Transport\PHP\PHPTransport;
 use BenTools\MercurePHP\Transport\TransportFactoryInterface;
 use Evenement\EventEmitter;
 use Evenement\EventEmitterInterface;
@@ -10,7 +11,7 @@ use React\Promise\PromiseInterface;
 
 use function React\Promise\resolve;
 
-final class InMemoryTransportFactory implements TransportFactoryInterface
+final class PHPTransportFactory implements TransportFactoryInterface
 {
     /**
      * @var EventEmitterInterface
@@ -29,6 +30,6 @@ final class InMemoryTransportFactory implements TransportFactoryInterface
 
     public function create(string $dsn, LoopInterface $loop): PromiseInterface
     {
-        return resolve(new InMemoryTransport($this->emitter));
+        return resolve(new PHPTransport($this->emitter));
     }
 }

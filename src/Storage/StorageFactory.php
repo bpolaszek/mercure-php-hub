@@ -2,7 +2,7 @@
 
 namespace BenTools\MercurePHP\Storage;
 
-use BenTools\MercurePHP\Storage\InMemory\InMemoryStorageFactory;
+use BenTools\MercurePHP\Storage\PHP\PHPStorageFactory;
 use BenTools\MercurePHP\Storage\NullStorage\NullStorageFactory;
 use BenTools\MercurePHP\Storage\Redis\RedisStorageFactory;
 use Psr\Log\LoggerInterface;
@@ -50,7 +50,7 @@ final class StorageFactory implements StorageFactoryInterface
         return new self(
             [
                 new RedisStorageFactory($logger),
-                new InMemoryStorageFactory(),
+                new PHPStorageFactory(),
                 new NullStorageFactory(),
             ]
         );

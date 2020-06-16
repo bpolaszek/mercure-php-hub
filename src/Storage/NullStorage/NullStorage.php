@@ -10,7 +10,7 @@ use function React\Promise\resolve;
 
 final class NullStorage implements StorageInterface
 {
-    public function retrieveMessagesAfterId(string $id): PromiseInterface
+    public function retrieveMessagesAfterId(string $id, array $subscribedTopics): PromiseInterface
     {
         return resolve([]);
     }

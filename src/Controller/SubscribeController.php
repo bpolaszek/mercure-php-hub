@@ -36,20 +36,24 @@ final class SubscribeController extends AbstractController
         $this->queryStringParser = new QueryStringParser();
     }
 
-    public function __invoke(Request $request, ?Stream $stream = null): ResponseInterface
+    public function __invoke(Request $request): ResponseInterface
     {
-
         $request = $this->withAttributes($request);
 
         if ('OPTIONS' === $request->getMethod()) {
             return new Http\Response(200);
         }
 
-        $stream ??= new ThroughStream();
+        $stream = new ThroughStream();
 
-        $this->fetchMissedMessages($request->getAttribute('lastEventId'))
-            ->then(fn(iterable $messages) => $this->sendMissedMessages($messages, $request, $stream))
-            ->then(fn() => $this->subscribe($request, $stream));
+        $lastEventID = $request->getAttribute('lastEventId');
+        $subscribedTopics = $request->getAttribute('subscribedTopics');
+        $this->loop
+            ->futureTick(
+                fn() => $this->fetchMissedMessages($lastEventID, $subscribedTopics)
+                        ->then(fn(iterable $messages) => $this->sendMissedMessages($messages, $request, $stream))
+                        ->then(fn() => $this->subscribe($request, $stream))
+            );
 
         $headers = [
             'Content-Type' => 'text/event-stream',
@@ -123,13 +127,13 @@ final class SubscribeController extends AbstractController
         return all($promises);
     }
 
-    private function fetchMissedMessages(?string $lastEventID): PromiseInterface
+    private function fetchMissedMessages(?string $lastEventID, array $subscribedTopics): PromiseInterface
     {
         if (null === $lastEventID) {
             return resolve([]);
         }
 
-        return $this->storage->retrieveMessagesAfterId($lastEventID);
+        return $this->storage->retrieveMessagesAfterId($lastEventID, $subscribedTopics);
     }
 
     private function sendMissedMessages(iterable $messages, Request $request, Stream $stream): PromiseInterface
@@ -170,9 +174,8 @@ final class SubscribeController extends AbstractController
     private function getLastEventID(Request $request, array $queryParams): ?string
     {
         return nullify($request->getHeaderLine('Last-Event-ID'))
-            ?? $queryParams['Last-Event-ID']
-            ?? $queryParams['Last-Event-Id']
-            ?? $queryParams['last-event-id']
-            ?? null;
+            ?? nullify($queryParams['Last-Event-ID'] ?? null)
+            ?? nullify($queryParams['Last-Event-Id'] ?? null)
+            ?? nullify($queryParams['last-event-id'] ?? null);
     }
 }
