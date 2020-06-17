@@ -1,0 +1,18 @@
+build:
+  environment:
+    php: '7.4'
+  nodes:
+    analysis:
+      tests:
+        override:
+          - php-scrutinizer-run
+          -
+            command: ./vendor/bin/pest --coverage-clover build/logs/clover.xml
+            coverage:
+              file: build/logs/clover.xml
+              format: clover
+
+checks:
+    php:
+        code_rating: true
+        duplication: true
