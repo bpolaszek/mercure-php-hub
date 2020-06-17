@@ -1,3 +1,7 @@
+![CI Workflow](https://github.com/bpolaszek/mercure-php-hub/workflows/CI%20Workflow/badge.svg)
+[![codecov](https://codecov.io/gh/bpolaszek/mercure-php-hub/branch/master/graph/badge.svg)](https://codecov.io/gh/bpolaszek/mercure-php-hub)
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/bpolaszek/mercure-php-hub/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/bpolaszek/mercure-php-hub/?branch=master)
+
 # Mercure PHP Hub
 
 This POC is a PHP implementation of the [Mercure Hub Specification](https://mercure.rocks/spec).

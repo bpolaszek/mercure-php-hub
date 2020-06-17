@@ -1,5 +1,8 @@
 name: CI Workflow
 
+env:
+  CODECOV_TOKEN: "bfaef100-626e-4f5a-827d-8e6d629f8388"
+
 on:
   push:
     branches: [ master ]
@@ -17,27 +20,21 @@ jobs:
     - name: Redis Server in GitHub Actions
       uses: supercharge/redis-github-action@1.1.0
 
-    - name: Enable Composer parallel downloads
-      run: composer global require symfony/flex
-
     - name: Validate composer.json and composer.lock
       run: composer validate
 
-    - name: Cache Composer packages
-      id: composer-cache
-      uses: actions/cache@v2
-      with:
-        path: vendor
-        key: ${{ runner.os }}-node-${{ hashFiles('**/composer.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-node-
+    - name: Enable Composer parallel downloads
+      run: composer global require symfony/flex
 
     - name: Install dependencies
       if: steps.composer-cache.outputs.cache-hit != 'true'
       run: composer install --prefer-dist --no-progress --no-suggest
 
     - name: Run unit tests
-      run: composer tests:unit:run
+      run: composer tests:unit:run:with-coverage
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v1.0.7
 
     - name: Run integration tests with default transport (PHP)
       run: composer tests:integration:run
