@@ -54,8 +54,34 @@ final class TopicMatcher
         }
 
         $allowedTopics = $claim['subscribe'] ?? [];
+        $deniedTopics = $claim['subscribe_exclude'] ?? [];
 
-        return self::matchesTopicSelectors($topic, $allowedTopics);
+        return self::matchesTopicSelectors($topic, $allowedTopics)
+            && !self::matchesTopicSelectors($topic, $deniedTopics);
+    }
+
+    public static function canUpdateTopic(string $topic, Token $token, bool $privateUpdate): bool
+    {
+        try {
+            $claim = (array) $token->getClaim('mercure');
+        } catch (\OutOfBoundsException $e) {
+            return false;
+        }
+
+        $allowedTopics = $claim['publish'] ?? null;
+        $deniedTopics = $claim['publish_exclude'] ?? [];
+
+        // If not defined, then the publisher MUST NOT be authorized to dispatch any update
+        if (null === $allowedTopics || !\is_array($allowedTopics)) {
+            return false;
+        }
+
+        if (true === $privateUpdate) {
+            return self::matchesTopicSelectors($topic, $allowedTopics ?? [])
+            && !self::matchesTopicSelectors($topic, $deniedTopics);
+        }
+
+        return !self::matchesTopicSelectors($topic, $deniedTopics);
     }
 
     public static function canReceiveUpdate(
@@ -88,7 +114,9 @@ final class TopicMatcher
         }
 
         $allowedTopics = $claim['subscribe'] ?? [];
+        $deniedTopics = $claim['subscribe_exclude'] ?? [];
 
-        return self::matchesTopicSelectors($topic, $allowedTopics);
+        return self::matchesTopicSelectors($topic, $allowedTopics)
+            && !self::matchesTopicSelectors($topic, $deniedTopics);
     }
 }

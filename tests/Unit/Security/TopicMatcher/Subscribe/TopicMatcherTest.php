@@ -1,6 +1,6 @@
 <?php
 
-namespace BenTools\MercurePHP\Tests\Unit\Security\TopicMatcher;
+namespace BenTools\MercurePHP\Tests\Unit\Security\TopicMatcher\Subscribe;
 
 use BenTools\MercurePHP\Security\TopicMatcher;
 use BenTools\MercurePHP\Tests\Classes\FilterIterator;
@@ -16,10 +16,27 @@ function createMercureJWT(string $key, array $mercureClaim): Token
 {
     return (new Builder())
     ->withClaim('mercure', $mercureClaim)
-        ->sign(new Sha256(), new Key($key))
-        ->getToken()
+        ->getToken(new Sha256(), new Key($key))
     ;
 }
+
+test('the * selector opens all the gates', function () {
+    $token = createMercureJWT('foo', ['subscribe' => ['*']]);
+    \assertTrue(TopicMatcher::matchesTopicSelectors('/foo', ['*']));
+    \assertTrue(TopicMatcher::matchesTopicSelectors('/foo/{bar}', ['*']));
+    \assertTrue(TopicMatcher::canSubscribeToTopic('/foo', $token, false));
+    \assertTrue(TopicMatcher::canReceiveUpdate('/foo', new Message('foo'), ['/foo'], $token, false));
+});
+
+test('some topics can be excluded', function () {
+    $token = createMercureJWT('foo', [
+        'subscribe' => ['*'],
+        'subscribe_exclude' => ['/bar'],
+    ]);
+
+    \assertTrue(TopicMatcher::canSubscribeToTopic('/foo', $token, false));
+    \assertFalse(TopicMatcher::canSubscribeToTopic('/bar', $token, false));
+});
 
 /**
  * All the following tests are:
@@ -210,12 +227,4 @@ test(
 
 test('all combinations have been tested', function () use ($combinations, &$counter) {
     \assertEquals(\count($combinations), $counter);
-});
-
-test('the * selector opens all the gates', function () {
-    $token = createMercureJWT('foo', ['subscribe' => ['*']]);
-    \assertTrue(TopicMatcher::matchesTopicSelectors('/foo', ['*']));
-    \assertTrue(TopicMatcher::matchesTopicSelectors('/foo/{bar}', ['*']));
-    \assertTrue(TopicMatcher::canSubscribeToTopic('/foo', $token, false));
-    \assertTrue(TopicMatcher::canReceiveUpdate('/foo', new Message('foo'), ['/foo'], $token, false));
 });

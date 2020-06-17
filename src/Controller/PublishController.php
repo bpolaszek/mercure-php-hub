@@ -5,7 +5,9 @@ namespace BenTools\MercurePHP\Controller;
 use BenTools\MercurePHP\Exception\Http\AccessDeniedHttpException;
 use BenTools\MercurePHP\Exception\Http\BadRequestHttpException;
 use BenTools\MercurePHP\Security\Authenticator;
+use BenTools\MercurePHP\Security\TopicMatcher;
 use BenTools\MercurePHP\Transport\Message;
+use Lcobucci\JWT\Token;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -23,13 +25,19 @@ final class PublishController extends AbstractController
 
     public function __invoke(ServerRequestInterface $request): ResponseInterface
     {
-        $topicSelectors = $this->getAuthorizedTopicSelectors($request);
+        $request = $this->withAttributes($request);
+        $token = $request->getAttribute('token');
+        $topicSelectors = $this->getAuthorizedTopicSelectors($token);
         $input = (array) $request->getParsedBody();
         $input = $this->normalizeInput($input);
         $canDispatchPrivateUpdates = ([] !== $topicSelectors);
 
         if ($input['private'] && !$canDispatchPrivateUpdates) {
             throw new AccessDeniedHttpException('You are not allowed to dispatch private updates.');
+        }
+
+        if (false === TopicMatcher::canUpdateTopic($input['topic'], $token, $input['private'])) {
+            throw new AccessDeniedHttpException('You are not allowed to update this topic.');
         }
 
         $id = $input['id'] ?? (string) Uuid::uuid4();
@@ -91,7 +99,7 @@ final class PublishController extends AbstractController
         return $input;
     }
 
-    private function getAuthorizedTopicSelectors(ServerRequestInterface $request): array
+    private function withAttributes(ServerRequestInterface $request): ServerRequestInterface
     {
         try {
             $token = $this->authenticator->authenticate($request);
@@ -99,6 +107,11 @@ final class PublishController extends AbstractController
             throw new AccessDeniedHttpException($e->getMessage());
         }
 
+        return $request->withAttribute('token', $token ?? null);
+    }
+
+    private function getAuthorizedTopicSelectors(?Token $token): array
+    {
         if (null === $token) {
             throw new AccessDeniedHttpException('Invalid auth token.');
         }
