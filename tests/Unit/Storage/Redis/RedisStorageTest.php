@@ -3,12 +3,12 @@
 namespace BenTools\MercurePHP\Tests\Unit\Storage\Redis;
 
 use BenTools\MercurePHP\Storage\Redis\RedisStorage;
-use BenTools\MercurePHP\Tests\Classes\NullLoop;
 use BenTools\MercurePHP\Transport\Message;
 use Clue\React\Redis;
 use Predis\Client;
 use Ramsey\Uuid\Uuid;
 use React\EventLoop;
+use React\EventLoop\Factory;
 
 use function Clue\React\Block\await;
 
@@ -47,7 +47,7 @@ it('retrieves missed messages', function () {
     }
 
     $subscribedTopics = ['*'];
-    $bucket = await($storage->retrieveMessagesAfterId($ids[0], $subscribedTopics), new NullLoop());
+    $bucket = await($storage->retrieveMessagesAfterId($ids[0], $subscribedTopics), Factory::create());
     $received = [];
     foreach ($bucket as $topic => $message) {
         $received[] = $message;
@@ -56,7 +56,7 @@ it('retrieves missed messages', function () {
     \assertEquals($received, \array_slice($flatten($messages()), 1, 3));
 
     $subscribedTopics = ['/foo'];
-    $bucket = await($storage->retrieveMessagesAfterId($ids[0], $subscribedTopics), new NullLoop());
+    $bucket = await($storage->retrieveMessagesAfterId($ids[0], $subscribedTopics), Factory::create());
     $received = [];
     foreach ($bucket as $topic => $message) {
         $received[] = $message;

@@ -3,9 +3,15 @@
 namespace BenTools\MercurePHP\Hub;
 
 use BenTools\MercurePHP\Configuration\Configuration;
+use BenTools\MercurePHP\Controller\HealthController;
+use BenTools\MercurePHP\Controller\PublishController;
+use BenTools\MercurePHP\Controller\SubscribeController;
+use BenTools\MercurePHP\Helpers\LoggerAwareTrait;
 use BenTools\MercurePHP\Metrics\MetricsHandlerFactory;
 use BenTools\MercurePHP\Metrics\MetricsHandlerFactoryInterface;
 use BenTools\MercurePHP\Metrics\MetricsHandlerInterface;
+use BenTools\MercurePHP\Metrics\PHP\PHPMetricsHandler;
+use BenTools\MercurePHP\Security\Authenticator;
 use BenTools\MercurePHP\Storage\StorageFactory;
 use BenTools\MercurePHP\Storage\StorageFactoryInterface;
 use BenTools\MercurePHP\Storage\StorageInterface;
@@ -20,8 +26,9 @@ use function Clue\React\Block\await;
 
 final class HubFactory
 {
+    use LoggerAwareTrait;
+
     private array $config;
-    private LoggerInterface $logger;
     private TransportFactoryInterface $transportFactory;
     private StorageFactoryInterface $storageFactory;
     private MetricsHandlerFactoryInterface $metricsHandlerFactory;
@@ -40,18 +47,33 @@ final class HubFactory
         $this->metricsHandlerFactory = $metricsHandlerFactory ?? MetricsHandlerFactory::default($config, $this->logger);
     }
 
-    public function create(): Hub
+    public function create(EventLoop\LoopInterface $loop): Hub
     {
-        $loop = EventLoop\Factory::create();
         $transport = $this->createTransport($loop);
         $storage = $this->createStorage($loop);
         $metricsHandler = $this->createMetricsHandler($loop);
 
-        return (new Hub($this->config, $loop))
-            ->withLogger($this->logger)
-            ->withMetricsHandler($metricsHandler)
-            ->withTransport($transport)
-            ->withStorage($storage);
+        $subscriberAuthenticator = Authenticator::createSubscriberAuthenticator($this->config);
+        $publisherAuthenticator = Authenticator::createPublisherAuthenticator($this->config);
+
+        $controllers = [
+            new HealthController(),
+            (new SubscribeController($this->config, $subscriberAuthenticator))
+                ->withLoop($loop)
+                ->withTransport($transport)
+                ->withStorage($storage)
+                ->withLogger($this->logger())
+            ,
+            (new PublishController($publisherAuthenticator))
+                ->withTransport($transport)
+                ->withStorage($storage)
+                ->withLogger($this->logger())
+            ,
+        ];
+
+        $requestHandler = new RequestHandler($controllers);
+
+        return new Hub($this->config, $requestHandler, $metricsHandler, $this->logger());
     }
 
     private function createTransport(EventLoop\LoopInterface $loop): TransportInterface
