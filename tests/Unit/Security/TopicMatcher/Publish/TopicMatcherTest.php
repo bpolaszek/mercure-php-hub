@@ -63,7 +63,11 @@ $combinations = combinations([
             return false === $combination['private'] ? $isNotExcluded : $isIncluded && $isNotExcluded;
         },
     ],
-]);
+])->asArray();
+
+it('contains 44 combinations', function () use ($combinations) {
+    \assertCount(44, $combinations);
+});
 
 test(
     'Topic can be updated only when authorized',
@@ -72,8 +76,8 @@ test(
         \assertSame($expected, $result);
         $counter++;
     }
-)->with($combinations->asArray());
+)->with($combinations);
 
-test('all combinations have been tested', function () use ($combinations, &$counter) {
+test('All combinations have been tested', function () use ($combinations, &$counter) {
     \assertEquals(\count($combinations), $counter);
-})->skip('Test fails because of a Pest-related bug');
+});
