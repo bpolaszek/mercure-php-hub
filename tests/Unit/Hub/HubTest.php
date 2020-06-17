@@ -14,6 +14,7 @@ use React\EventLoop\Factory;
 use React\EventLoop\LoopInterface;
 use React\Promise\PromiseInterface;
 use RingCentral\Psr7\ServerRequest;
+
 use function Clue\React\Block\await;
 use function React\Promise\resolve;
 
@@ -41,15 +42,12 @@ $hub = (new HubFactory(
     new NullLogger(),
     new NullTransportFactory(),
     new NullStorageFactory()
-))->create();
+))->create(Factory::create());
 
 
 it('returns 200 when asking for health', function () use ($hub) {
     $request = new ServerRequest('GET', '/.well-known/mercure/health');
     $reflClass = new \ReflectionClass(Hub::class);
-    $reflMethod = $reflClass->getMethod('init');
-    $reflMethod->setAccessible(true);
-    $reflMethod->invoke($hub);
     $response = await($hub($request), Factory::create());
     \assertEquals(200, $response->getStatusCode());
 });
@@ -57,9 +55,6 @@ it('returns 200 when asking for health', function () use ($hub) {
 it('returns 404 when resource is not found', function () use ($hub) {
     $request = new ServerRequest('GET', '/foo');
     $reflClass = new \ReflectionClass(Hub::class);
-    $reflMethod = $reflClass->getMethod('init');
-    $reflMethod->setAccessible(true);
-    $reflMethod->invoke($hub);
     $response = await($hub($request), Factory::create());
     \assertEquals(404, $response->getStatusCode());
 });
@@ -67,9 +62,6 @@ it('returns 404 when resource is not found', function () use ($hub) {
 it('returns 403 when not allowed to publish', function () use ($hub) {
     $request = new ServerRequest('POST', '/.well-known/mercure');
     $reflClass = new \ReflectionClass(Hub::class);
-    $reflMethod = $reflClass->getMethod('init');
-    $reflMethod->setAccessible(true);
-    $reflMethod->invoke($hub);
     $response = await($hub($request), Factory::create());
     \assertEquals(403, $response->getStatusCode());
     \assertEquals('Invalid auth token.', (string) $response->getBody());
@@ -78,9 +70,6 @@ it('returns 403 when not allowed to publish', function () use ($hub) {
 it('returns 403 when not allowed to subscribe', function () use ($hub) {
     $request = new ServerRequest('GET', '/.well-known/mercure');
     $reflClass = new \ReflectionClass(Hub::class);
-    $reflMethod = $reflClass->getMethod('init');
-    $reflMethod->setAccessible(true);
-    $reflMethod->invoke($hub);
     $response = await($hub($request), Factory::create());
     \assertEquals(403, $response->getStatusCode());
     \assertEquals('Anonymous subscriptions are not allowed on this hub.', (string) $response->getBody());

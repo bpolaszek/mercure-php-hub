@@ -6,6 +6,7 @@ use BenTools\MercurePHP\Storage\PHP\PHPStorage;
 use BenTools\MercurePHP\Transport\Message;
 use Ramsey\Uuid\Uuid;
 use React\EventLoop\Factory;
+
 use function Clue\React\Block\await;
 
 it('won\'t store more messages than the given limit', function (int $size, array $messages, array $expected) {

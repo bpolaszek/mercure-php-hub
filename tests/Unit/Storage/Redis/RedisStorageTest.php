@@ -9,6 +9,7 @@ use Predis\Client;
 use Ramsey\Uuid\Uuid;
 use React\EventLoop;
 use React\EventLoop\Factory;
+
 use function Clue\React\Block\await;
 
 it('retrieves missed messages', function () {

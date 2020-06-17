@@ -3,19 +3,13 @@
 namespace BenTools\MercurePHP\Hub;
 
 use BenTools\MercurePHP\Configuration\Configuration;
-use BenTools\MercurePHP\Controller\AbstractController;
-use BenTools\MercurePHP\Controller\HealthController;
-use BenTools\MercurePHP\Controller\PublishController;
-use BenTools\MercurePHP\Controller\SubscribeController;
 use BenTools\MercurePHP\Helpers\LoggerAwareTrait;
-use BenTools\MercurePHP\Metrics\PHP\PHPMetricsHandler;
 use BenTools\MercurePHP\Metrics\MetricsHandlerInterface;
-use BenTools\MercurePHP\Security\Authenticator;
 use BenTools\MercurePHP\Security\CORS;
-use BenTools\MercurePHP\Storage\StorageInterface;
-use BenTools\MercurePHP\Transport\TransportInterface;
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use React\EventLoop\LoopInterface;
 use React\Http;
@@ -24,33 +18,34 @@ use React\Socket;
 
 use function React\Promise\resolve;
 
-final class Hub
+final class Hub implements RequestHandlerInterface
 {
     use LoggerAwareTrait;
 
     private array $config;
-    private LoopInterface $loop;
     private RequestHandlerInterface $requestHandler;
     private CORS $cors;
     private MetricsHandlerInterface $metricsHandler;
-    private StorageInterface $storage;
-    private TransportInterface $transport;
 
-    public function __construct(array $config, LoopInterface $loop)
-    {
+    public function __construct(
+        array $config,
+        RequestHandlerInterface $requestHandler,
+        MetricsHandlerInterface $metricsHandler,
+        ?LoggerInterface $logger = null
+    ) {
         $this->config = $config;
-        $this->loop = $loop;
-        $this->metricsHandler = new PHPMetricsHandler();
+        $this->requestHandler = $requestHandler;
+        $this->metricsHandler = $metricsHandler;
+        $this->logger = $logger ?? new NullLogger();
         $this->cors = new CORS($config);
     }
 
-    public function run(): void
+    public function run(LoopInterface $loop): void
     {
-        $this->init();
         $localAddress = $this->config[Configuration::ADDR];
-        $socket = new Socket\Server($localAddress, $this->loop);
+        $socket = new Socket\Server($localAddress, $loop);
         $this->metricsHandler->resetUsers($localAddress);
-        $this->loop->addPeriodicTimer(
+        $loop->addPeriodicTimer(
             15,
             fn() => $this->metricsHandler->getNbUsers()->then(
                 function (int $nbUsers) {
@@ -69,83 +64,19 @@ final class Hub
         $server = new Http\Server($this);
         $server->listen($socket);
         $this->logger()->info("Server running at http://" . $localAddress);
-        $this->loop->run();
+        $loop->run();
+    }
+
+    public function handle(ServerRequestInterface $request): ResponseInterface
+    {
+        return $this->cors->decorateResponse(
+            $request,
+            $this->requestHandler->handle($request)
+        );
     }
 
     public function __invoke(ServerRequestInterface $request): PromiseInterface
     {
-        return resolve(
-            $this->cors->decorateResponse(
-                $request,
-                $this->requestHandler->handle($request)
-            )
-        );
-    }
-
-    public function withTransport(TransportInterface $transport): self
-    {
-        $clone = clone $this;
-        $clone->transport = $transport;
-
-        return $clone;
-    }
-
-    public function withStorage(StorageInterface $storage): self
-    {
-        $clone = clone $this;
-        $clone->storage = $storage;
-
-        return $clone;
-    }
-
-    public function withMetricsHandler(MetricsHandlerInterface $metricsHandler): self
-    {
-        $clone = clone $this;
-        $clone->metricsHandler = $metricsHandler;
-
-        return $clone;
-    }
-
-    public function withRequestHandler(RequestHandlerInterface $requestHandler): self
-    {
-        $clone = clone $this;
-        $clone->requestHandler = $requestHandler;
-
-        return $clone;
-    }
-
-    private function init(): void
-    {
-        if (!isset($this->loop)) {
-            throw new \RuntimeException("Loop has not been set.");
-        }
-        if (!isset($this->transport)) {
-            throw new \RuntimeException("Transport has not been set.");
-        }
-        if (!isset($this->storage)) {
-            throw new \RuntimeException("Storage has not been set.");
-        }
-
-        $subscriberAuthenticator = Authenticator::createSubscriberAuthenticator($this->config);
-        $publisherAuthenticator = Authenticator::createPublisherAuthenticator($this->config);
-
-        $controllers = [
-            new HealthController(),
-            (new SubscribeController($this->config, $subscriberAuthenticator))
-                ->withLoop($this->loop)
-                ->withTransport($this->transport)
-                ->withStorage($this->storage)
-                ->withLogger($this->logger())
-            ,
-            (new PublishController($publisherAuthenticator))
-                ->withTransport($this->transport)
-                ->withStorage($this->storage)
-                ->withLogger($this->logger())
-            ,
-        ];
-
-        if (!isset($this->requestHandler)) {
-            $this->requestHandler = new RequestHandler($controllers);
-        }
+        return resolve($this->handle($request));
     }
 }

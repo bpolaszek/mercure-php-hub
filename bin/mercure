@@ -8,6 +8,7 @@ require __DIR__.'/../vendor/autoload.php';
 use BenTools\MercurePHP\Configuration\Configuration;
 use BenTools\MercurePHP\Hub\HubFactory;
 use Psr\Log\LogLevel;
+use React\EventLoop\Factory;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Logger\ConsoleLogger;
@@ -31,8 +32,9 @@ $app->setCode(
                 )
                 ->asArray();
 
-            $hub = (new HubFactory($config, $logger))->create();
-            $hub->run();
+            $loop = Factory::create();
+            $hub = (new HubFactory($config, $logger))->create($loop);
+            $hub->run($loop);
 
             return 0;
         } catch (\Exception $e) {

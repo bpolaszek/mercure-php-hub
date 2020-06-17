@@ -12,6 +12,7 @@ use BenTools\MercurePHP\Transport\Message;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface as Request;
+use React\EventLoop\Factory;
 use React\Http;
 use React\Promise\PromiseInterface;
 use React\Stream\ThroughStream;
@@ -34,6 +35,7 @@ final class SubscribeController extends AbstractController
         $this->allowAnonymous = $config[Configuration::ALLOW_ANONYMOUS];
         $this->authenticator = $authenticator;
         $this->queryStringParser = new QueryStringParser();
+        $this->loop = Factory::create();
     }
 
     public function __invoke(Request $request): ResponseInterface
