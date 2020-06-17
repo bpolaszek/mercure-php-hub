@@ -3,11 +3,9 @@
 namespace BenTools\MercurePHP\Tests\Unit\Storage\PHP;
 
 use BenTools\MercurePHP\Storage\PHP\PHPStorage;
-use BenTools\MercurePHP\Tests\Classes\NullLoop;
 use BenTools\MercurePHP\Transport\Message;
 use Ramsey\Uuid\Uuid;
 use React\EventLoop\Factory;
-
 use function Clue\React\Block\await;
 
 it('won\'t store more messages than the given limit', function (int $size, array $messages, array $expected) {
@@ -73,7 +71,7 @@ it('retrieves missed messages', function () {
     }
 
     $subscribedTopics = ['*'];
-    $bucket = await($storage->retrieveMessagesAfterId($storage::EARLIEST, $subscribedTopics), new NullLoop());
+    $bucket = await($storage->retrieveMessagesAfterId($storage::EARLIEST, $subscribedTopics), Factory::create());
     $received = [];
     foreach ($bucket as $topic => $message) {
         $received[] = $message;
@@ -82,7 +80,7 @@ it('retrieves missed messages', function () {
     \assertEquals($received, $flatten($messages()));
 
     $subscribedTopics = ['*'];
-    $bucket = await($storage->retrieveMessagesAfterId($ids[0], $subscribedTopics), new NullLoop());
+    $bucket = await($storage->retrieveMessagesAfterId($ids[0], $subscribedTopics), Factory::create());
     $received = [];
     foreach ($bucket as $topic => $message) {
         $received[] = $message;
@@ -91,7 +89,7 @@ it('retrieves missed messages', function () {
     \assertEquals($received, \array_slice($flatten($messages()), 1, 3));
 
     $subscribedTopics = ['/foo'];
-    $bucket = await($storage->retrieveMessagesAfterId($storage::EARLIEST, $subscribedTopics), new NullLoop());
+    $bucket = await($storage->retrieveMessagesAfterId($storage::EARLIEST, $subscribedTopics), Factory::create());
     $received = [];
     foreach ($bucket as $topic => $message) {
         $received[] = $message;
@@ -100,7 +98,7 @@ it('retrieves missed messages', function () {
     \assertEquals($received, \array_slice($flatten($messages()), 0, 2));
 
     $subscribedTopics = ['/foo'];
-    $bucket = await($storage->retrieveMessagesAfterId($ids[0], $subscribedTopics), new NullLoop());
+    $bucket = await($storage->retrieveMessagesAfterId($ids[0], $subscribedTopics), Factory::create());
     $received = [];
     foreach ($bucket as $topic => $message) {
         $received[] = $message;
