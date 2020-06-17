@@ -140,14 +140,14 @@ it('yells if data is invalid', function (?array $postData = null) {
     $request = authenticate(createPublishRequest($postData), $token);
     $handle($request);
 })
-    ->throws(
-        BadRequestHttpException::class,
-        'Invalid data parameter.'
-    )
-    ->with(function () {
-        yield [['topic' => '/foo', 'data' => []]];
-        yield [['topic' => '/foo', 'data' => new \stdClass()]];
-    });
+->throws(
+    BadRequestHttpException::class,
+    'Invalid data parameter.'
+)
+->with(function () {
+    yield [['topic' => '/foo', 'data' => []]];
+    yield [['topic' => '/foo', 'data' => new \stdClass()]];
+});
 
 it('yells when trying to dispatch an unauthorized private update', function (?array $postData = null) {
     $token = createJWT(['mercure' => ['publish' => []]], 'foo');
@@ -155,13 +155,27 @@ it('yells when trying to dispatch an unauthorized private update', function (?ar
     $request = authenticate(createPublishRequest($postData), $token);
     $handle($request);
 })
-    ->throws(
-        AccessDeniedHttpException::class,
-        'You are not allowed to dispatch private updates.'
-    )
-    ->with(function () {
-        yield [['topic' => '/foo', 'data' => 'foo', 'private' => true]];
-    });
+->throws(
+    AccessDeniedHttpException::class,
+    'You are not allowed to dispatch private updates.'
+)
+->with(function () {
+    yield [['topic' => '/foo', 'data' => 'foo', 'private' => true]];
+});
+
+it('yells when trying to dispatch an unauthorized update', function (?array $postData = null) {
+    $token = createJWT(['mercure' => ['publish' => ['/foo/bar'], 'publish_exclude' => ['/foo/{id}']]], 'foo');
+    $handle = createController(new Configuration(['jwt_key' => 'foo']));
+    $request = authenticate(createPublishRequest($postData), $token);
+    $handle($request);
+})
+->throws(
+    AccessDeniedHttpException::class,
+    'You are not allowed to update this topic.'
+)
+->with(function () {
+    yield [['topic' => '/foo/bar', 'data' => 'foo']];
+});
 
 it('publishes an update to the hub', function () {
     $token = createJWT(['mercure' => ['publish' => []]], 'foo');

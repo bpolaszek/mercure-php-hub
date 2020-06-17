@@ -104,7 +104,7 @@ Nodes are the total number of ReactPHP open ports.
 Hub was hosted on cheap server(s): 2GB / 2 CPU VPS (Ubuntu 20.04). 
 You could probably reach a very high level of performance with better-sized servers and dedicated CPUs.
 
-### Feature coverage
+## Feature coverage
 
 | Feature | Covered |
 | ------- | ------- |
@@ -121,14 +121,77 @@ You could probably reach a very high level of performance with better-sized serv
 | Environment variables configuration | ✅ |
 | Custom message IDs | ✅ |
 | Last event ID | ✅️ (except: `earliest` on REDIS transport) |
+| Customizable event type | ❌️ (WIP) |
+| Customizable `retry` directive | ❌️ (WIP) |
+| Logging | ❌ (WIP)️ |
+| Metrics | ❌ (WIP)️ |
 | Subscription events | ❌️ |
 | Subscription API | ❌️ |
 | Configuration w/ config file | ❌️ |
-| Customizable event type | ❌️ (implemented, but not tested) |
-| Customizable `retry` directive | ❌️ (implemented, but not tested) |
 | Payload | ❌️ |
 | Heartbeat | ❌️ |
 | `Forwarded` / `X-Forwarded-For` headers | ❌️ |
+
+## Additional features
+
+This implementation provides features which are not defined in the original specification.
+
+### Subscribe / Publish topic exclusions
+
+Mercure leverages [URI Templates](https://tools.ietf.org/html/rfc6570) to grant subscribe and/or publish auhorizations 
+on an URI pattern basis:
+```json
+{
+  "mercure": {
+    "publish": [
+      "https://example.com/items/{id}"
+    ],
+    "subscribe": [
+      "https://example.com/items/{id}"
+    ]
+  }
+}
+```
+
+However, denying access to a specific URL matching an URI template requires you to explicitely list authorized items:
+```json
+{
+  "mercure": {
+    "publish": [
+      "https://example.com/items/1",
+      "https://example.com/items/2",
+      "https://example.com/items/4"
+    ],
+    "subscribe": [
+      "https://example.com/items/1",
+      "https://example.com/items/2",
+      "https://example.com/items/4"
+    ]
+  }
+}
+```
+
+When dealing with thousands of possibilities, it can quicky become a problem. The Mercure PHP Hub allows you to specify
+denylists through the `publish_exclude` and `subscribe_exclude` keys, which accept any topic selector:
+```json
+{
+  "mercure": {
+    "publish": [
+      "https://example.com/items/{id}"
+    ],
+    "publish_exclude": [
+      "https://example.com/items/3"
+    ],
+    "subscribe": [
+      "https://example.com/items/{id}"
+    ],
+    "subscribe_exclude": [
+      "https://example.com/items/3"
+    ]
+  }
+}
+```
+
 
 ## Tests
 
