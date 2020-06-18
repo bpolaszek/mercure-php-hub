@@ -15,6 +15,7 @@ use React\EventLoop\LoopInterface;
 use React\Http;
 use React\Promise\PromiseInterface;
 use React\Socket;
+use React\Socket\ConnectionInterface;
 
 use function React\Promise\resolve;
 
@@ -60,10 +61,7 @@ final class Hub implements RequestHandlerInterface
         );
 
         $socket = $this->createSocketConnection($localAddress, $loop);
-        $this->createServer($socket, $loop);
-
-        $this->logger()->info("Server running at http://" . $localAddress);
-        $loop->run();
+        $this->serve($localAddress, $socket, $loop);
     }
 
     public function handle(ServerRequestInterface $request): ResponseInterface
@@ -79,6 +77,26 @@ final class Hub implements RequestHandlerInterface
         return resolve($this->handle($request));
     }
 
+    private function createSocketConnection(string $localAddress, LoopInterface $loop): Socket\Server
+    {
+        $socket = new Socket\Server($localAddress, $loop);
+        $socket->on('connection', function (ConnectionInterface $connection) use ($localAddress) {
+            $this->metricsHandler->incrementUsers($localAddress);
+            $connection->on('close', fn() => $this->metricsHandler->decrementUsers($localAddress));
+        });
+
+        return $socket;
+    }
+
+    private function serve(string $localAddress, Socket\Server $socket, LoopInterface $loop): void
+    {
+        $server = new Http\Server($this);
+        $server->listen($socket);
+
+        $this->logger()->info("Server running at http://" . $localAddress);
+        $loop->run();
+    }
+
     public function getShutdownSignal(): ?int
     {
         return $this->shutdownSignal;
@@ -90,27 +108,5 @@ final class Hub implements RequestHandlerInterface
         $loop->futureTick(function () use ($loop) {
             $loop->stop();
         });
-    }
-
-    private function createSocketConnection(string $localAddress, LoopInterface $loop): Socket\Server
-    {
-        $socket = new Socket\Server($localAddress, $loop);
-        $socket->on(
-            'connection',
-            function (Socket\ConnectionInterface $connection) use ($localAddress) {
-                $this->metricsHandler->incrementUsers($localAddress);
-                $connection->on('close', fn() => $this->metricsHandler->decrementUsers($localAddress));
-            }
-        );
-
-        return $socket;
-    }
-
-    private function createServer(Socket\Server $socket, LoopInterface $loop): Http\Server
-    {
-        $server = new Http\Server($this);
-        $server->listen($socket);
-
-        return $server;
     }
 }
