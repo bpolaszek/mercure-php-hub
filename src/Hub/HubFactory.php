@@ -58,8 +58,7 @@ final class HubFactory
 
         $controllers = [
             new HealthController(),
-            (new SubscribeController($this->config, $subscriberAuthenticator))
-                ->withLoop($loop)
+            (new SubscribeController($this->config, $subscriberAuthenticator, $loop))
                 ->withTransport($transport)
                 ->withStorage($storage)
                 ->withLogger($this->logger())

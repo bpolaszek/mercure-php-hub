@@ -1,28 +1,28 @@
-#!/usr/bin/env php
 <?php
 
-namespace BenTools\MercurePHP;
-
-require __DIR__ . '/../vendor/autoload.php';
+namespace BenTools\MercurePHP\Command;
 
 use Lcobucci\JWT\Builder;
 use Lcobucci\JWT\Signer\Hmac\Sha256;
 use Lcobucci\JWT\Signer\Key;
 use RingCentral\Psr7\Uri;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\SingleCommandApplication;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\HttpClient\Exception\TimeoutException;
 use Symfony\Component\HttpClient\Exception\TransportException;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
-$app = new SingleCommandApplication();
-$app->setCode(
-    function (InputInterface $input, OutputInterface $output): int {
+final class StressSubscribersCommand extends Command
+{
+    protected static $defaultName = 'mercure:stress:subscribers';
+
+    protected function execute(InputInterface $input, OutputInterface $output): int
+    {
         $output = new SymfonyStyle($input, $output);
         $start = time();
 
@@ -42,14 +42,16 @@ $app->setCode(
             ->withClaim('mercure', ['subscribe' => ['*']])
             ->getToken(new Sha256(), new Key($input->getOption('jwt-key')));
 
-        $client = HttpClient::create([
-            'http_version' => '2.0',
-            'verify_peer' => false,
-            'verify_host' => false,
-            'headers' => [
-                'Authorization' => 'Bearer ' . $jwt,
-            ],
-        ]);
+        $client = HttpClient::create(
+            [
+                'http_version' => '2.0',
+                'verify_peer' => false,
+                'verify_host' => false,
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $jwt,
+                ],
+            ]
+        );
 
         $url = new Uri($input->getArgument('url'));
         $qs = '';
@@ -87,12 +89,14 @@ $app->setCode(
 
         return 0;
     }
-);
 
-$app->addArgument('url', InputArgument::REQUIRED, 'Mercure Hub url.');
-$app->addOption('jwt-key', null, InputOption::VALUE_REQUIRED, 'Subscriber JWT KEY.');
-$app->addOption('topics', null, InputOption::VALUE_REQUIRED, 'Topics to subscribe.');
-$app->addOption('duration', null, InputOption::VALUE_OPTIONAL, 'Duration of the test, in seconds.', 10);
-$app->addOption('subscribers', null, InputOption::VALUE_OPTIONAL, 'Number of subscribers', 100);
-
-$app->run();
+    protected function configure(): void
+    {
+        $this->setDescription('(Testing purposes) Simulates n subscribers on a Mercure Hub.');
+        $this->addArgument('url', InputArgument::REQUIRED, 'Mercure Hub url.');
+        $this->addOption('jwt-key', null, InputOption::VALUE_REQUIRED, 'Subscriber JWT KEY.');
+        $this->addOption('topics', null, InputOption::VALUE_REQUIRED, 'Topics to subscribe, comma-separated.');
+        $this->addOption('duration', null, InputOption::VALUE_OPTIONAL, 'Duration of the test, in seconds.', 10);
+        $this->addOption('subscribers', null, InputOption::VALUE_OPTIONAL, 'Number of subscribers', 100);
+    }
+}

@@ -13,6 +13,7 @@ use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use React\EventLoop\Factory;
+use React\EventLoop\LoopInterface;
 use React\Http;
 use React\Promise\PromiseInterface;
 use React\Stream\ThroughStream;
@@ -26,16 +27,17 @@ use function React\Promise\resolve;
 final class SubscribeController extends AbstractController
 {
     private Authenticator $authenticator;
+    private LoopInterface $loop;
     private QueryStringParser $queryStringParser;
     private bool $allowAnonymous;
 
-    public function __construct(array $config, Authenticator $authenticator)
+    public function __construct(array $config, Authenticator $authenticator, ?LoopInterface $loop = null)
     {
         $this->config = $config;
         $this->allowAnonymous = $config[Configuration::ALLOW_ANONYMOUS];
         $this->authenticator = $authenticator;
         $this->queryStringParser = new QueryStringParser();
-        $this->loop = Factory::create();
+        $this->loop = $loop ?? Factory::create();
     }
 
     public function __invoke(Request $request): ResponseInterface

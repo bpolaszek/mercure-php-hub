@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "fc5e08601e8c65d4e7be292eb86b8619",
+    "content-hash": "6291fcfb3fdfe60a3bc9f2df8514a78e",
     "packages": [
         {
             "name": "bentools/psr7-request-matcher",
@@ -2855,16 +2855,16 @@
         },
         {
             "name": "pestphp/pest",
-            "version": "v0.2.0",
+            "version": "v0.2.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/pestphp/pest.git",
-                "reference": "a3fd60ce4d892b80504359a3c1b8ff815d5541ee"
+                "reference": "283d8f3e03956cbee210d69edd5ad13690078723"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/pestphp/pest/zipball/a3fd60ce4d892b80504359a3c1b8ff815d5541ee",
-                "reference": "a3fd60ce4d892b80504359a3c1b8ff815d5541ee",
+                "url": "https://api.github.com/repos/pestphp/pest/zipball/283d8f3e03956cbee210d69edd5ad13690078723",
+                "reference": "283d8f3e03956cbee210d69edd5ad13690078723",
                 "shasum": ""
             },
             "require": {
@@ -2930,7 +2930,7 @@
                 "testing",
                 "unit"
             ],
-            "time": "2020-06-14T15:01:15+00:00"
+            "time": "2020-06-17T16:57:54+00:00"
         },
         {
             "name": "pestphp/pest-plugin",
@@ -5564,7 +5564,8 @@
     "platform": {
         "php": ">=7.4",
         "ext-json": "*",
-        "ext-mbstring": "*"
+        "ext-mbstring": "*",
+        "ext-pcntl": "*"
     },
     "platform-dev": {
         "ext-dom": "*"
