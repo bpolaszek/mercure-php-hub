@@ -14,10 +14,9 @@ abstract class AbstractController implements RequestMatcherInterface
 {
     use LoggerAwareTrait;
 
-    protected array $config;
-    protected LoopInterface $loop;
-    protected TransportInterface $transport;
-    protected StorageInterface $storage;
+    protected array $config = [];
+    protected ?TransportInterface $transport;
+    protected ?StorageInterface $storage;
 
     abstract public function __invoke(ServerRequestInterface $request): ResponseInterface;
 
@@ -33,14 +32,6 @@ abstract class AbstractController implements RequestMatcherInterface
     {
         $clone = clone $this;
         $clone->storage = $storage;
-
-        return $clone;
-    }
-
-    public function withLoop(LoopInterface $loop): self
-    {
-        $clone = clone $this;
-        $clone->loop = $loop;
 
         return $clone;
     }
