@@ -24,6 +24,7 @@
         "php": ">=7.4",
         "ext-json": "*",
         "ext-mbstring": "*",
+        "ext-pcntl": "*",
         "bentools/psr7-request-matcher": "^1.1",
         "bentools/querystring": "^1.0",
         "clue/block-react": "^1.3",

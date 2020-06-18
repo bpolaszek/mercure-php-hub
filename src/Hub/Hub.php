@@ -26,6 +26,7 @@ final class Hub implements RequestHandlerInterface
     private RequestHandlerInterface $requestHandler;
     private CORS $cors;
     private MetricsHandlerInterface $metricsHandler;
+    private ?int $shutdownSignal;
 
     public function __construct(
         array $config,
@@ -43,8 +44,11 @@ final class Hub implements RequestHandlerInterface
     public function run(LoopInterface $loop): void
     {
         $localAddress = $this->config[Configuration::ADDR];
-        $socket = new Socket\Server($localAddress, $loop);
+        $this->shutdownSignal = null;
         $this->metricsHandler->resetUsers($localAddress);
+        $loop->addSignal(SIGINT, function ($signal) use ($loop) {
+            $this->stop($signal, $loop);
+        });
         $loop->addPeriodicTimer(
             15,
             fn() => $this->metricsHandler->getNbUsers()->then(
@@ -54,15 +58,10 @@ final class Hub implements RequestHandlerInterface
                 }
             )
         );
-        $socket->on(
-            'connection',
-            function (Socket\ConnectionInterface $connection) use ($localAddress) {
-                $this->metricsHandler->incrementUsers($localAddress);
-                $connection->on('close', fn() => $this->metricsHandler->decrementUsers($localAddress));
-            }
-        );
-        $server = new Http\Server($this);
-        $server->listen($socket);
+
+        $socket = $this->createSocketConnection($localAddress, $loop);
+        $this->createServer($socket, $loop);
+
         $this->logger()->info("Server running at http://" . $localAddress);
         $loop->run();
     }
@@ -78,5 +77,40 @@ final class Hub implements RequestHandlerInterface
     public function __invoke(ServerRequestInterface $request): PromiseInterface
     {
         return resolve($this->handle($request));
+    }
+
+    public function getShutdownSignal(): ?int
+    {
+        return $this->shutdownSignal;
+    }
+
+    private function stop(int $signal, LoopInterface $loop): void
+    {
+        $this->shutdownSignal = $signal;
+        $loop->futureTick(function () use ($loop) {
+            $loop->stop();
+        });
+    }
+
+    private function createSocketConnection(string $localAddress, LoopInterface $loop): Socket\Server
+    {
+        $socket = new Socket\Server($localAddress, $loop);
+        $socket->on(
+            'connection',
+            function (Socket\ConnectionInterface $connection) use ($localAddress) {
+                $this->metricsHandler->incrementUsers($localAddress);
+                $connection->on('close', fn() => $this->metricsHandler->decrementUsers($localAddress));
+            }
+        );
+
+        return $socket;
+    }
+
+    private function createServer(Socket\Server $socket, LoopInterface $loop): Http\Server
+    {
+        $server = new Http\Server($this);
+        $server->listen($socket);
+
+        return $server;
     }
 }

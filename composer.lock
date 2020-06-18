@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "fc5e08601e8c65d4e7be292eb86b8619",
+    "content-hash": "6291fcfb3fdfe60a3bc9f2df8514a78e",
     "packages": [
         {
             "name": "bentools/psr7-request-matcher",
@@ -5564,7 +5564,8 @@
     "platform": {
         "php": ">=7.4",
         "ext-json": "*",
-        "ext-mbstring": "*"
+        "ext-mbstring": "*",
+        "ext-pcntl": "*"
     },
     "platform-dev": {
         "ext-dom": "*"
