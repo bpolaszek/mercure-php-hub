@@ -6,7 +6,7 @@ use BenTools\MercurePHP\Command\ServeCommand;
 use React\EventLoop\Factory;
 use Symfony\Component\Console\Tester\CommandTester;
 
-it('serves a Mercure Hub', function() {
+it('serves a Mercure Hub', function () {
     $loop = Factory::create();
     $loop->addTimer(0.5, fn() => $loop->stop());
     $command = new ServeCommand($loop);

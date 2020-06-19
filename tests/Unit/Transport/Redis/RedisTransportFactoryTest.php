@@ -10,7 +10,8 @@ use React\EventLoop\Factory;
 use function Clue\React\Block\await;
 
 it('allows only redis dsns', function (string $dsn, bool $expected) {
-    $factory = new RedisTransportFactory();
+    $loop = Factory::create();
+    $factory = new RedisTransportFactory($loop);
     \assertEquals($expected, $factory->supports($dsn));
 })->with(function () {
     yield ['redis://localhost', true];
@@ -21,9 +22,9 @@ it('allows only redis dsns', function (string $dsn, bool $expected) {
 });
 
 it('creates an async transport instance', function () {
-    $factory = new RedisTransportFactory();
     $loop = Factory::create();
-    $promise = $factory->create('redis://localhost', $loop);
+    $factory = new RedisTransportFactory($loop);
+    $promise = $factory->create('redis://localhost');
     $transport = await($promise, $loop);
     \assertInstanceOf(TransportInterface::class, $transport);
     \assertInstanceOf(RedisTransport::class, $transport);

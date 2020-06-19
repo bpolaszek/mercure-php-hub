@@ -70,7 +70,8 @@
         "ci:check": [
             "@phpcs:check",
             "@phpstan:analyze",
-            "@tests:run"
+            "@tests:unit:run",
+            "@tests:integration:run"
         ]
     },
     "keywords": [

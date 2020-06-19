@@ -2,11 +2,6 @@
 
 namespace BenTools\MercurePHP\Storage;
 
-use BenTools\MercurePHP\Storage\PHP\PHPStorageFactory;
-use BenTools\MercurePHP\Storage\NullStorage\NullStorageFactory;
-use BenTools\MercurePHP\Storage\Redis\RedisStorageFactory;
-use Psr\Log\LoggerInterface;
-use React\EventLoop\LoopInterface;
 use React\Promise\PromiseInterface;
 
 final class StorageFactory implements StorageFactoryInterface
@@ -32,27 +27,16 @@ final class StorageFactory implements StorageFactoryInterface
         return false;
     }
 
-    public function create(string $dsn, LoopInterface $loop): PromiseInterface
+    public function create(string $dsn): PromiseInterface
     {
         foreach ($this->factories as $factory) {
             if (!$factory->supports($dsn)) {
                 continue;
             }
 
-            return $factory->create($dsn, $loop);
+            return $factory->create($dsn);
         }
 
         throw new \RuntimeException(\sprintf('Invalid storage DSN %s', $dsn));
-    }
-
-    public static function default(array $config, LoggerInterface $logger): self
-    {
-        return new self(
-            [
-                new RedisStorageFactory($logger),
-                new PHPStorageFactory(),
-                new NullStorageFactory(),
-            ]
-        );
     }
 }

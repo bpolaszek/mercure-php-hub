@@ -3,7 +3,6 @@
 namespace BenTools\MercurePHP\Storage\NullStorage;
 
 use BenTools\MercurePHP\Storage\StorageFactoryInterface;
-use React\EventLoop\LoopInterface;
 use React\Promise\PromiseInterface;
 
 use function React\Promise\resolve;
@@ -15,7 +14,7 @@ final class NullStorageFactory implements StorageFactoryInterface
         return 0 === \strpos($dsn, 'null://');
     }
 
-    public function create(string $dsn, LoopInterface $loop): PromiseInterface
+    public function create(string $dsn): PromiseInterface
     {
         return resolve(new NullStorage());
     }

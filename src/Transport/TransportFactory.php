@@ -2,10 +2,6 @@
 
 namespace BenTools\MercurePHP\Transport;
 
-use BenTools\MercurePHP\Transport\PHP\PHPTransportFactory;
-use BenTools\MercurePHP\Transport\Redis\RedisTransportFactory;
-use Psr\Log\LoggerInterface;
-use React\EventLoop\LoopInterface;
 use React\Promise\PromiseInterface;
 
 final class TransportFactory implements TransportFactoryInterface
@@ -31,26 +27,16 @@ final class TransportFactory implements TransportFactoryInterface
         return false;
     }
 
-    public function create(string $dsn, LoopInterface $loop): PromiseInterface
+    public function create(string $dsn): PromiseInterface
     {
         foreach ($this->factories as $factory) {
             if (!$factory->supports($dsn)) {
                 continue;
             }
 
-            return $factory->create($dsn, $loop);
+            return $factory->create($dsn);
         }
 
         throw new \RuntimeException(\sprintf('Invalid transport DSN %s', $dsn));
-    }
-
-    public static function default(array $config, LoggerInterface $logger): self
-    {
-        return new self(
-            [
-                new RedisTransportFactory($logger),
-                new PHPTransportFactory(),
-            ]
-        );
     }
 }

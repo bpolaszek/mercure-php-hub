@@ -2,9 +2,7 @@
 
 namespace BenTools\MercurePHP\Storage\PHP;
 
-use BenTools\MercurePHP\Storage\PHP\PHPStorage;
 use BenTools\MercurePHP\Storage\StorageFactoryInterface;
-use React\EventLoop\LoopInterface;
 use React\Promise\PromiseInterface;
 use RingCentral\Psr7\Uri;
 
@@ -18,7 +16,7 @@ final class PHPStorageFactory implements StorageFactoryInterface
         return 0 === \strpos($dsn, 'php://');
     }
 
-    public function create(string $dsn, LoopInterface $loop): PromiseInterface
+    public function create(string $dsn): PromiseInterface
     {
         $qs = query_string(new Uri($dsn));
         $size = $qs->getParam('size') ?? 0;
