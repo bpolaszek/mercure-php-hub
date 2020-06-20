@@ -1,18 +1,28 @@
 build:
   environment:
     php: '7.4'
-  nodes:
-    analysis:
-      tests:
-        override:
-          - php-scrutinizer-run
-          -
-            command: ./vendor/bin/pest --coverage-clover build/logs/clover.xml
-            coverage:
-              file: build/logs/clover.xml
-              format: clover
+  tests:
+    override:
+      command: "php -v" # Disable tests for Scrutinizer as they're handled by Github Actions
 
 checks:
     php:
-        code_rating: true
-        duplication: true
+        simplify_boolean_return: true
+        return_doc_comment_if_not_inferrable: true
+        properties_in_camelcaps: true
+        parameters_in_camelcaps: true
+        param_doc_comment_if_not_inferrable: true
+        more_specific_types_in_doc_comments: true
+        fix_use_statements:
+            remove_unused: true
+        fix_line_ending: true
+        check_method_contracts:
+            verify_interface_like_constraints: true
+            verify_documented_constraints: true
+            verify_parent_constraints: true
+
+coding_style:
+    php:
+        spaces:
+            around_operators:
+                concatenation: true
