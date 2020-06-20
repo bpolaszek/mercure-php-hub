@@ -3,7 +3,7 @@
 namespace BenTools\MercurePHP\Tests\Unit\Storage\Redis;
 
 use BenTools\MercurePHP\Storage\Redis\RedisStorage;
-use BenTools\MercurePHP\Transport\Message;
+use BenTools\MercurePHP\Message\Message;
 use Clue\React\Redis;
 use Predis\Client;
 use Ramsey\Uuid\Uuid;

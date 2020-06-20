@@ -3,7 +3,7 @@
 namespace BenTools\MercurePHP\Tests\Unit\Storage\PHP;
 
 use BenTools\MercurePHP\Storage\PHP\PHPStorage;
-use BenTools\MercurePHP\Transport\Message;
+use BenTools\MercurePHP\Message\Message;
 use Ramsey\Uuid\Uuid;
 use React\EventLoop\Factory;
 

@@ -2,7 +2,7 @@
 
 namespace BenTools\MercurePHP\Storage;
 
-use BenTools\MercurePHP\Transport\Message;
+use BenTools\MercurePHP\Message\Message;
 use React\Promise\PromiseInterface;
 
 interface StorageInterface

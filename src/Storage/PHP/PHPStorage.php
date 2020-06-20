@@ -4,7 +4,7 @@ namespace BenTools\MercurePHP\Storage\PHP;
 
 use BenTools\MercurePHP\Security\TopicMatcher;
 use BenTools\MercurePHP\Storage\StorageInterface;
-use BenTools\MercurePHP\Transport\Message;
+use BenTools\MercurePHP\Message\Message;
 use React\Promise\PromiseInterface;
 
 use function React\Promise\resolve;
