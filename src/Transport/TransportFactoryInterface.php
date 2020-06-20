@@ -2,7 +2,6 @@
 
 namespace BenTools\MercurePHP\Transport;
 
-use React\EventLoop\LoopInterface;
 use React\Promise\PromiseInterface;
 
 interface TransportFactoryInterface
@@ -15,5 +14,5 @@ interface TransportFactoryInterface
     /**
      * The implementation MUST return a promise which resolves to a TransportInterface implementation.
      */
-    public function create(string $dsn, LoopInterface $loop): PromiseInterface;
+    public function create(string $dsn): PromiseInterface;
 }

@@ -15,8 +15,11 @@ final class RedisMetricsHandlerFactory implements MetricsHandlerFactoryInterface
 {
     use LoggerAwareTrait;
 
-    public function __construct(?LoggerInterface $logger)
+    private LoopInterface $loop;
+
+    public function __construct(LoopInterface $loop, ?LoggerInterface $logger)
     {
+        $this->loop = $loop;
         $this->logger = $logger;
     }
 
@@ -25,9 +28,9 @@ final class RedisMetricsHandlerFactory implements MetricsHandlerFactoryInterface
         return RedisHelper::isRedisDSN($dsn);
     }
 
-    public function create(string $dsn, LoopInterface $loop): PromiseInterface
+    public function create(string $dsn): PromiseInterface
     {
-        $factory = new Factory($loop);
+        $factory = new Factory($this->loop);
 
         return $factory->createClient($dsn)
             ->then(fn (AsynchronousClient $client) => new RedisMetricsHandler($client));

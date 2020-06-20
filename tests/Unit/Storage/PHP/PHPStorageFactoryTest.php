@@ -28,11 +28,11 @@ it('creates a storage instance', function () {
     $loop = Factory::create();
     $factory = new PHPStorageFactory();
 
-    $storage = await($factory->create('php://localhost', $loop), $loop);
+    $storage = await($factory->create('php://localhost'), $loop);
     \assertInstanceOf(PHPStorage::class, $storage);
     \assertEquals(0, $reflProp->getValue($storage));
 
-    $storage = await($factory->create('php://localhost?size=100', $loop), $loop);
+    $storage = await($factory->create('php://localhost?size=100'), $loop);
     \assertInstanceOf(PHPStorage::class, $storage);
     \assertEquals(100, $reflProp->getValue($storage));
 });

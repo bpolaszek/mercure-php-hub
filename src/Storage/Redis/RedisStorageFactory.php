@@ -19,8 +19,11 @@ final class RedisStorageFactory implements StorageFactoryInterface
 {
     use LoggerAwareTrait;
 
-    public function __construct(?LoggerInterface $logger = null)
+    private LoopInterface $loop;
+
+    public function __construct(LoopInterface $loop, ?LoggerInterface $logger = null)
     {
+        $this->loop = $loop;
         $this->logger = $logger;
     }
 
@@ -29,25 +32,25 @@ final class RedisStorageFactory implements StorageFactoryInterface
         return RedisHelper::isRedisDSN($dsn);
     }
 
-    public function create(string $dsn, LoopInterface $loop): PromiseInterface
+    public function create(string $dsn): PromiseInterface
     {
-        $factory = new Factory($loop);
+        $factory = new Factory($this->loop);
         $promises = [
             'async' => $factory->createClient($dsn)
                 ->then(
-                    function (AsynchronousClient $client) use ($loop) {
+                    function (AsynchronousClient $client) {
                         $client->on(
                             'close',
-                            function () use ($loop) {
+                            function () {
                                 $this->logger()->error('Connection closed.');
-                                $loop->stop();
+                                $this->loop->stop();
                             }
                         );
 
                         return $client;
                     },
-                    function (\Exception $exception) use ($loop) {
-                        $loop->stop();
+                    function (\Exception $exception) {
+                        $this->loop->stop();
                         $this->logger()->error($exception->getMessage());
                     }
                 ),
@@ -56,14 +59,14 @@ final class RedisStorageFactory implements StorageFactoryInterface
 
         return all($promises)
             ->then(
-                function (iterable $results) use ($loop): array {
+                function (iterable $results): array {
                     $clients = [];
                     foreach ($results as $key => $client) {
                         $clients[$key] = $client;
                     }
 
                     // Sounds weird, but helps in detecting an anomaly during connection
-                    RedisHelper::testAsynchronousClient($clients['async'], $loop, $this->logger());
+                    RedisHelper::testAsynchronousClient($clients['async'], $this->loop, $this->logger());
 
                     return $clients;
                 }

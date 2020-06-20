@@ -22,7 +22,7 @@ it('allows only redis dsns', function (string $dsn, bool $expected) {
 it('creates a transport instance', function () {
     $factory = new PHPTransportFactory();
     $loop = Factory::create();
-    $promise = $factory->create('php://localhost', $loop);
+    $promise = $factory->create('php://localhost');
     $transport = await($promise, $loop);
     \assertInstanceOf(TransportInterface::class, $transport);
     \assertInstanceOf(PHPTransport::class, $transport);

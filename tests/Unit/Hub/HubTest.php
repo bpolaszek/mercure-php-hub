@@ -11,7 +11,6 @@ use BenTools\MercurePHP\Tests\Classes\NullTransportFactory;
 use BenTools\MercurePHP\Transport\TransportFactoryInterface;
 use Psr\Log\NullLogger;
 use React\EventLoop\Factory;
-use React\EventLoop\LoopInterface;
 use React\Promise\PromiseInterface;
 use RingCentral\Psr7\ServerRequest;
 
@@ -32,7 +31,7 @@ $transportFactory = new class implements TransportFactoryInterface {
         return true;
     }
 
-    public function create(string $dsn, LoopInterface $loop): PromiseInterface
+    public function create(string $dsn): PromiseInterface
     {
         return resolve(new NullTransport());
     }

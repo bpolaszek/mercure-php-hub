@@ -2,7 +2,6 @@
 
 namespace BenTools\MercurePHP\Storage;
 
-use React\EventLoop\LoopInterface;
 use React\Promise\PromiseInterface;
 
 interface StorageFactoryInterface
@@ -15,5 +14,5 @@ interface StorageFactoryInterface
     /**
      * The implementation MUST return a promise which resolves to a StorageInterface implementation.
      */
-    public function create(string $dsn, LoopInterface $loop): PromiseInterface;
+    public function create(string $dsn): PromiseInterface;
 }

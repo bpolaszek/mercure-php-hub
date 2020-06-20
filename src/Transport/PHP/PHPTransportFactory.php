@@ -2,11 +2,9 @@
 
 namespace BenTools\MercurePHP\Transport\PHP;
 
-use BenTools\MercurePHP\Transport\PHP\PHPTransport;
 use BenTools\MercurePHP\Transport\TransportFactoryInterface;
 use Evenement\EventEmitter;
 use Evenement\EventEmitterInterface;
-use React\EventLoop\LoopInterface;
 use React\Promise\PromiseInterface;
 
 use function React\Promise\resolve;
@@ -28,7 +26,7 @@ final class PHPTransportFactory implements TransportFactoryInterface
         return 0 === \strpos($dsn, 'php://');
     }
 
-    public function create(string $dsn, LoopInterface $loop): PromiseInterface
+    public function create(string $dsn): PromiseInterface
     {
         return resolve(new PHPTransport($this->emitter));
     }

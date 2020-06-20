@@ -10,17 +10,23 @@ use BenTools\MercurePHP\Helpers\LoggerAwareTrait;
 use BenTools\MercurePHP\Metrics\MetricsHandlerFactory;
 use BenTools\MercurePHP\Metrics\MetricsHandlerFactoryInterface;
 use BenTools\MercurePHP\Metrics\MetricsHandlerInterface;
-use BenTools\MercurePHP\Metrics\PHP\PHPMetricsHandler;
+use BenTools\MercurePHP\Metrics\PHP\PHPMetricsHandlerFactory;
+use BenTools\MercurePHP\Metrics\Redis\RedisMetricsHandlerFactory;
 use BenTools\MercurePHP\Security\Authenticator;
+use BenTools\MercurePHP\Storage\NullStorage\NullStorageFactory;
+use BenTools\MercurePHP\Storage\PHP\PHPStorageFactory;
+use BenTools\MercurePHP\Storage\Redis\RedisStorageFactory;
 use BenTools\MercurePHP\Storage\StorageFactory;
 use BenTools\MercurePHP\Storage\StorageFactoryInterface;
 use BenTools\MercurePHP\Storage\StorageInterface;
+use BenTools\MercurePHP\Transport\PHP\PHPTransportFactory;
+use BenTools\MercurePHP\Transport\Redis\RedisTransportFactory;
 use BenTools\MercurePHP\Transport\TransportFactory;
 use BenTools\MercurePHP\Transport\TransportFactoryInterface;
 use BenTools\MercurePHP\Transport\TransportInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use React\EventLoop;
+use React\EventLoop\LoopInterface;
 
 use function Clue\React\Block\await;
 
@@ -29,9 +35,9 @@ final class HubFactory
     use LoggerAwareTrait;
 
     private array $config;
-    private TransportFactoryInterface $transportFactory;
-    private StorageFactoryInterface $storageFactory;
-    private MetricsHandlerFactoryInterface $metricsHandlerFactory;
+    private ?TransportFactoryInterface $transportFactory;
+    private ?StorageFactoryInterface $storageFactory;
+    private ?MetricsHandlerFactoryInterface $metricsHandlerFactory;
 
     public function __construct(
         array $config,
@@ -42,12 +48,12 @@ final class HubFactory
     ) {
         $this->config = $config;
         $this->logger = $logger ?? new NullLogger();
-        $this->transportFactory = $transportFactory ?? TransportFactory::default($config, $this->logger);
-        $this->storageFactory = $storageFactory ?? StorageFactory::default($config, $this->logger);
-        $this->metricsHandlerFactory = $metricsHandlerFactory ?? MetricsHandlerFactory::default($config, $this->logger);
+        $this->transportFactory = $transportFactory;
+        $this->storageFactory = $storageFactory;
+        $this->metricsHandlerFactory = $metricsHandlerFactory;
     }
 
-    public function create(EventLoop\LoopInterface $loop): Hub
+    public function create(LoopInterface $loop): Hub
     {
         $transport = $this->createTransport($loop);
         $storage = $this->createStorage($loop);
@@ -75,21 +81,29 @@ final class HubFactory
         return new Hub($this->config, $requestHandler, $metricsHandler, $this->logger());
     }
 
-    private function createTransport(EventLoop\LoopInterface $loop): TransportInterface
+    private function createTransport(LoopInterface $loop): TransportInterface
     {
-        $factory = $this->transportFactory;
+        $factory = $this->transportFactory ?? $this->getDefaultTransportFactory($loop);
         $dsn = $this->config[Configuration::TRANSPORT_URL];
 
         if (!$factory->supports($dsn)) {
             throw new \RuntimeException(\sprintf('Invalid transport DSN %s', $dsn));
         }
 
-        return await($factory->create($dsn, $loop), $loop);
+        return await($factory->create($dsn), $loop);
     }
 
-    private function createStorage(EventLoop\LoopInterface $loop): StorageInterface
+    private function getDefaultTransportFactory(LoopInterface $loop): TransportFactory
     {
-        $factory = $this->storageFactory;
+        return new TransportFactory([
+            new RedisTransportFactory($loop, $this->logger()),
+            new PHPTransportFactory(),
+        ]);
+    }
+
+    private function createStorage(LoopInterface $loop): StorageInterface
+    {
+        $factory = $this->storageFactory ?? $this->getDefaultStorageFactory($loop);
         $dsn = $this->config[Configuration::STORAGE_URL]
             ?? $this->config[Configuration::TRANSPORT_URL];
 
@@ -97,12 +111,21 @@ final class HubFactory
             throw new \RuntimeException(\sprintf('Invalid storage DSN %s', $dsn));
         }
 
-        return await($factory->create($dsn, $loop), $loop);
+        return await($factory->create($dsn), $loop);
     }
 
-    private function createMetricsHandler(EventLoop\LoopInterface $loop): MetricsHandlerInterface
+    private function getDefaultStorageFactory(LoopInterface $loop): StorageFactory
     {
-        $factory = $this->metricsHandlerFactory;
+        return new StorageFactory([
+            new RedisStorageFactory($loop, $this->logger()),
+            new PHPStorageFactory(),
+            new NullStorageFactory(),
+        ]);
+    }
+
+    private function createMetricsHandler(LoopInterface $loop): MetricsHandlerInterface
+    {
+        $factory = $this->metricsHandlerFactory ?? $this->getDefaultMetricsHandlerFactory($loop);
         $dsn = $this->config[Configuration::METRICS_URL]
             ?? $this->config[Configuration::STORAGE_URL]
             ?? $this->config[Configuration::TRANSPORT_URL];
@@ -111,6 +134,14 @@ final class HubFactory
             throw new \RuntimeException(\sprintf('Invalid metrics handler DSN %s', $dsn));
         }
 
-        return await($factory->create($dsn, $loop), $loop);
+        return await($factory->create($dsn), $loop);
+    }
+
+    private function getDefaultMetricsHandlerFactory(LoopInterface $loop): MetricsHandlerFactory
+    {
+        return new MetricsHandlerFactory([
+            new PHPMetricsHandlerFactory(),
+            new RedisMetricsHandlerFactory($loop, $this->logger()),
+        ]);
     }
 }
