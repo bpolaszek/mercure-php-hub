@@ -2,7 +2,7 @@
 
 namespace BenTools\MercurePHP\Tests\Unit\Transport\PHP;
 
-use BenTools\MercurePHP\Transport\Message;
+use BenTools\MercurePHP\Message\Message;
 use BenTools\MercurePHP\Transport\PHP\PHPTransport;
 
 it('transports messages', function () {

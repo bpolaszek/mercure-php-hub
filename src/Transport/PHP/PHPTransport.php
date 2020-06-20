@@ -3,7 +3,7 @@
 namespace BenTools\MercurePHP\Transport\PHP;
 
 use BenTools\MercurePHP\Security\TopicMatcher;
-use BenTools\MercurePHP\Transport\Message;
+use BenTools\MercurePHP\Message\Message;
 use BenTools\MercurePHP\Transport\TransportInterface;
 use Evenement\EventEmitter;
 use Evenement\EventEmitterInterface;

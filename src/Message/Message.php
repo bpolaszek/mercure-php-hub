@@ -1,6 +1,6 @@
 <?php
 
-namespace BenTools\MercurePHP\Transport;
+namespace BenTools\MercurePHP\Message;
 
 final class Message implements \JsonSerializable
 {
@@ -29,7 +29,7 @@ final class Message implements \JsonSerializable
         return $this->id;
     }
 
-    public function getData(): string
+    public function getData(): ?string
     {
         return $this->data;
     }
@@ -41,19 +41,26 @@ final class Message implements \JsonSerializable
 
     public function __toString(): string
     {
-        $props = [
-            'id',
-            'data',
-            'event',
-            'retry',
-        ];
+        $output = 'id:' . $this->id . \PHP_EOL;
 
-        $output = '';
-        foreach ($props as $prop) {
-            if (null === $this->{$prop}) {
-                continue;
+        if (null !== $this->event) {
+            $output .= 'event:' . $this->event . \PHP_EOL;
+        }
+
+        if (null !== $this->retry) {
+            $output .= 'retry:' . $this->retry . \PHP_EOL;
+        }
+
+        if (null !== $this->data) {
+            // If $data contains line breaks, we have to serialize it in a different way
+            if (false !== \strpos($this->data, \PHP_EOL)) {
+                $lines = \explode(\PHP_EOL, $this->data);
+                foreach ($lines as $line) {
+                    $output .= 'data:' . $line . \PHP_EOL;
+                }
+            } else {
+                $output .= 'data:' . $this->data . \PHP_EOL;
             }
-            $output .= $prop . ':' . $this->{$prop} . \PHP_EOL;
         }
 
         return $output . \PHP_EOL;
