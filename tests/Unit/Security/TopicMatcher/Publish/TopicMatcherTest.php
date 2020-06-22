@@ -76,4 +76,4 @@ test(
 
 test('all combinations have been tested', function () use ($combinations, &$counter) {
     \assertEquals(\count($combinations), $counter);
-})->skip('Test fails because of a Pest-related bug');
+});
