@@ -20,13 +20,17 @@ it('transports messages', function () {
         $messages[$topic][] = $message;
     };
 
-    $promise = $transport->subscribe('/foo', $onMessage);
-    await($promise, $loop);
+    await($transport->subscribe('/foo', $onMessage), $loop);
+    await($transport->subscribe('/bar/{id}', $onMessage), $loop);
+    usleep(50000);
+    await($transport->publish('/foo', new Message('bar')), $loop);
+    await($transport->publish('/foo/bar', new Message('baz')), $loop);
+    await($transport->publish('/bar/baz', new Message('bat')), $loop);
 
-    $promise = $transport->publish('/foo', new Message('bar'));
-    await($promise, $loop);
-
-    $expected = ['/foo' => [new Message('bar')]];
+    $expected = [
+        '/foo' => [new Message('bar')],
+        '/bar/baz' => [new Message('bat')],
+    ];
 
     \assertEquals($expected, $messages);
 });
