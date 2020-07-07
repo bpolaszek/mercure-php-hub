@@ -24,7 +24,7 @@ EOF
         true,
         false,
     ],
-    'event' => [
+    'type' => [
         null,
         'test',
     ],
