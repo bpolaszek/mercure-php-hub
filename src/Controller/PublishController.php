@@ -45,7 +45,7 @@ final class PublishController extends AbstractController
             $id,
             $input['data'],
             (bool) $input['private'],
-            $input['event'],
+            $input['type'],
             null !== $input['retry'] ? (int) $input['retry'] : null
         );
 
@@ -93,7 +93,7 @@ final class PublishController extends AbstractController
 
         $input['data'] ??= null;
         $input['private'] ??= false;
-        $input['event'] ??= null;
+        $input['type'] ??= null;
         $input['retry'] ??= null;
 
         return $input;
