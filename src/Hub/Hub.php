@@ -90,7 +90,7 @@ final class Hub implements RequestHandlerInterface
 
     private function serve(string $localAddress, Socket\Server $socket, LoopInterface $loop): void
     {
-        $server = new Http\Server($this);
+        $server = new Http\Server($loop, $this);
         $server->listen($socket);
 
         $this->logger()->info("Server running at http://" . $localAddress);

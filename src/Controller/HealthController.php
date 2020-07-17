@@ -5,7 +5,7 @@ namespace BenTools\MercurePHP\Controller;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use React\Http;
+use React\Http\Message\Response;
 
 final class HealthController extends AbstractController
 {
@@ -16,7 +16,7 @@ final class HealthController extends AbstractController
             'Cache-Control' => 'no-cache',
         ];
 
-        return new Http\Response(200, $headers);
+        return new Response(200, $headers);
     }
 
     public function matchRequest(RequestInterface $request): bool

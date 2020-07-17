@@ -14,7 +14,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use React\EventLoop\Factory;
 use React\EventLoop\LoopInterface;
-use React\Http;
+use React\Http\Message\Response;
 use React\Promise\PromiseInterface;
 use React\Stream\ThroughStream;
 use React\Stream\WritableStreamInterface as Stream;
@@ -45,7 +45,7 @@ final class SubscribeController extends AbstractController
         $request = $this->withAttributes($request);
 
         if ('OPTIONS' === $request->getMethod()) {
-            return new Http\Response(200);
+            return new Response(200);
         }
 
         $stream = new ThroughStream();
@@ -64,7 +64,7 @@ final class SubscribeController extends AbstractController
             'Cache-Control' => 'no-cache',
         ];
 
-        return new Http\Response(200, $headers, $stream);
+        return new Response(200, $headers, $stream);
     }
 
     public function matchRequest(RequestInterface $request): bool

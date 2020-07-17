@@ -9,7 +9,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Ramsey\Uuid\Uuid;
-use React\Http;
+use React\Http\Message\Response;
 
 final class RequestHandler implements RequestHandlerInterface
 {
@@ -30,7 +30,7 @@ final class RequestHandler implements RequestHandlerInterface
 
             return $handle($request);
         } catch (HttpException $e) {
-            return new Http\Response(
+            return new Response(
                 $e->getStatusCode(),
                 ['Content-Type' => 'text/plain'],
                 $e->getMessage(),
