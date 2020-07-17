@@ -125,8 +125,8 @@ You could probably reach a very high level of performance with better-sized serv
 | Environment variables configuration | ✅ |
 | Custom message IDs | ✅ |
 | Last event ID | ✅️ (except: `earliest` on REDIS transport) |
-| Customizable event type | ❌️ (WIP) |
-| Customizable `retry` directive | ❌️ (WIP) |
+| Customizable event type | ✅️ |
+| Customizable `retry` directive | ✅️ |
 | Logging | ❌ (WIP)️ |
 | Metrics | ❌ (WIP)️ |
 | Subscription events | ❌️ |
@@ -135,6 +135,7 @@ You could probably reach a very high level of performance with better-sized serv
 | Payload | ❌️ |
 | Heartbeat | ❌️ |
 | `Forwarded` / `X-Forwarded-For` headers | ❌️ |
+| Alternate topics | ❌️ |
 
 ## Additional features
 
