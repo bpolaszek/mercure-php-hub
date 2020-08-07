@@ -4,20 +4,27 @@ env:
   CODECOV_TOKEN: "bfaef100-626e-4f5a-827d-8e6d629f8388"
 
 on:
-  push:
-    branches: [ master ]
   pull_request:
     branches: [ master ]
 
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      max-parallel: 10
+      matrix:
+        php: ['7.4']
+        experimental: [false]
+        include:
+          -   php: 8.0
+              experimental: true
 
     steps:
     - uses: actions/checkout@v2
 
-    - name: Redis Server in GitHub Actions
+    - name: Setup a Redis server
       uses: supercharge/redis-github-action@1.1.0
 
     - name: Validate composer.json and composer.lock
