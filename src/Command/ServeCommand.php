@@ -37,11 +37,7 @@ final class ServeCommand extends Command
         $output = new SymfonyStyle($input, $output);
         $logger = $this->logger ?? new ConsoleLogger($output, [LogLevel::INFO => OutputInterface::VERBOSITY_NORMAL]);
         try {
-            $config = (new Configuration())
-                ->overrideWith($_SERVER)
-                ->overrideWith($this->getInputOptions($input))
-                ->asArray();
-
+            $config = Configuration::bootstrapFromCLI($input)->asArray();
             $loop->futureTick(function () use ($config, $output) {
                 $this->displayConfiguration($config, $output);
             });

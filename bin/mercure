@@ -3,6 +3,7 @@
 
 namespace BenTools\MercurePHP;
 
+use BenTools\MercurePHP\Command\GenerateJWTCommand;
 use BenTools\MercurePHP\Command\ServeCommand;
 use BenTools\MercurePHP\Command\StressSubscribersCommand;
 use Symfony\Component\Console\Application;
@@ -12,6 +13,7 @@ require __DIR__.'/../vendor/autoload.php';
 $application = new Application('Mercure PHP Hub');
 
 $application->add((new ServeCommand())->setName('serve'));
+$application->add((new GenerateJWTCommand())->setName('jwt:generate'));
 $application->add((new StressSubscribersCommand())->setName('stress:subscribers'));
 
 $application
