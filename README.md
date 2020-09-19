@@ -16,7 +16,7 @@ It is currently experimental and production use is at your own risk, but feel fr
 PHP 7.4+ (and Redis, or a Redis instance, if using the Redis transport) is required to run the hub.
 
 ```bash
-composer create-project bentools/mercure-php-hub
+composer create-project bentools/mercure-php-hub:dev-master
 ```
 
 ## Usage
