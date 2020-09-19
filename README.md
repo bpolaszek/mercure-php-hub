@@ -197,6 +197,33 @@ denylists through the `publish_exclude` and `subscribe_exclude` keys, which acce
 }
 ```
 
+### Json Web Token Generator
+
+You can generate a JWT to use on the hub from the command-line:
+
+```bash
+./bin/mercure jwt:generate
+```
+
+It will ask you interactively what topic selectors you want to allow/deny for publishing/subscribing, and ask you 
+for an optional TTL.
+
+If you want a raw output (to pipe the generated JWT for instance), use the `--raw` option.
+
+To disable interaction, you can use the following example:
+
+
+```bash
+./bin/mercure jwt:generate --no-interactive --publish=/foo/{id} --publish=/bar --publish-exclude=/foo/bar
+```
+
+It will use your JWT keys environment variables, or you can use the `--jwt-key`, `--publisher-jwt-key`, `--subscriber-jwt-key` options.
+
+For a full list of available options, run this:
+
+```bash
+./bin/mercure jwt:generate -h
+```
 
 ## Tests
 

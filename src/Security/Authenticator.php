@@ -11,6 +11,8 @@ use Lcobucci\JWT\Token;
 use Psr\Http\Message\ServerRequestInterface;
 use RuntimeException;
 
+use function BenTools\MercurePHP\get_signer;
+
 final class Authenticator
 {
     private Parser $parser;
@@ -70,20 +72,6 @@ final class Authenticator
         }
     }
 
-    public static function getSignerFromAlgorithm(string $algorithm): Signer
-    {
-        $map = [
-            'HS256' => new Signer\Hmac\Sha256(),
-            'RS512' => new Signer\Rsa\Sha512(),
-        ];
-
-        if (!isset($map[$algorithm])) {
-            throw new \InvalidArgumentException(\sprintf('Invalid algorithm %s.', $algorithm));
-        }
-
-        return $map[$algorithm];
-    }
-
     public static function createPublisherAuthenticator(array $config): Authenticator
     {
         $publisherKey = $config[Configuration::PUBLISHER_JWT_KEY] ?? $config[Configuration::JWT_KEY];
@@ -92,7 +80,7 @@ final class Authenticator
         return new self(
             new Parser(),
             new Key($publisherKey),
-            self::getSignerFromAlgorithm($publisherAlgorithm)
+            get_signer($publisherAlgorithm)
         );
     }
 
@@ -104,7 +92,7 @@ final class Authenticator
         return new self(
             new Parser(),
             new Key($subscriberKey),
-            self::getSignerFromAlgorithm($subscriberAlgorithm)
+            get_signer($subscriberAlgorithm)
         );
     }
 }

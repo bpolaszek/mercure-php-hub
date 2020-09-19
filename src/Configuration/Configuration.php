@@ -2,6 +2,10 @@
 
 namespace BenTools\MercurePHP\Configuration;
 
+use Symfony\Component\Console\Input\InputInterface;
+
+use function BenTools\MercurePHP\nullify;
+
 final class Configuration
 {
     public const ADDR = 'addr';
@@ -44,7 +48,7 @@ final class Configuration
 
     private function export(): array
     {
-        $config = \array_map(fn ($value) => \is_string($value) && '' === \trim($value) ? null : $value, $this->config);
+        $config = \array_map(fn($value) => \is_string($value) && '' === \trim($value) ? null : $value, $this->config);
         if (null === $config[self::JWT_KEY] && null === $config[self::PUBLISHER_JWT_KEY]) {
             throw new \InvalidArgumentException(
                 "One of \"jwt_key\" or \"publisher_jwt_key\" configuration parameter must be defined."
@@ -84,5 +88,20 @@ final class Configuration
     private static function normalize(string $key): string
     {
         return \strtolower(\strtr($key, ['-' => '_']));
+    }
+
+    public static function bootstrapFromCLI(InputInterface $input): self
+    {
+        return (new self())
+            ->overrideWith($_SERVER)
+            ->overrideWith(self::filterCLIInput($input));
+    }
+
+    private static function filterCLIInput(InputInterface $input): array
+    {
+        return \array_filter(
+            $input->getOptions(),
+            fn($value) => null !== nullify($value) && false !== $value
+        );
     }
 }
