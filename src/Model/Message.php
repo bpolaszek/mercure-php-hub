@@ -1,6 +1,6 @@
 <?php
 
-namespace BenTools\MercurePHP\Message;
+namespace BenTools\MercurePHP\Model;
 
 final class Message implements \JsonSerializable
 {

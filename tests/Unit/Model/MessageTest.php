@@ -1,8 +1,8 @@
 <?php
 
-namespace BenTools\MercurePHP\Tests\Unit\Message;
+namespace BenTools\MercurePHP\Tests\Unit\Model;
 
-use BenTools\MercurePHP\Message\Message;
+use BenTools\MercurePHP\Model\Message;
 
 use function BenTools\CartesianProduct\cartesian_product;
 

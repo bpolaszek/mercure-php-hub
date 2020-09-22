@@ -3,7 +3,7 @@
 namespace BenTools\MercurePHP\Transport\Redis;
 
 use BenTools\MercurePHP\Security\TopicMatcher;
-use BenTools\MercurePHP\Message\Message;
+use BenTools\MercurePHP\Model\Message;
 use BenTools\MercurePHP\Transport\TransportInterface;
 use Clue\React\Redis\Client as AsynchronousClient;
 use React\Promise\PromiseInterface;

@@ -4,7 +4,7 @@ namespace BenTools\MercurePHP\Tests\Unit\Security\TopicMatcher\Publish;
 
 use BenTools\MercurePHP\Security\TopicMatcher;
 use BenTools\MercurePHP\Tests\Classes\FilterIterator;
-use BenTools\MercurePHP\Message\Message;
+use BenTools\MercurePHP\Model\Message;
 use Lcobucci\JWT\Builder;
 use Lcobucci\JWT\Signer\Hmac\Sha256;
 use Lcobucci\JWT\Signer\Key;

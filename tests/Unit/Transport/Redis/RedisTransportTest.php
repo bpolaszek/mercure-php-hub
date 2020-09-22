@@ -2,7 +2,7 @@
 
 namespace BenTools\MercurePHP\Tests\Unit\Transport\Redis;
 
-use BenTools\MercurePHP\Message\Message;
+use BenTools\MercurePHP\Model\Message;
 use BenTools\MercurePHP\Transport\Redis\RedisTransport;
 use Clue\React\Redis;
 use React\EventLoop;
