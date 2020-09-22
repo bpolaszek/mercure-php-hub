@@ -3,7 +3,7 @@
 namespace BenTools\MercurePHP\Storage\NullStorage;
 
 use BenTools\MercurePHP\Storage\StorageInterface;
-use BenTools\MercurePHP\Message\Message;
+use BenTools\MercurePHP\Model\Message;
 use React\Promise\PromiseInterface;
 
 use function React\Promise\resolve;

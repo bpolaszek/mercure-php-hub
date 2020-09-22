@@ -4,7 +4,7 @@ namespace BenTools\MercurePHP\Storage\Redis;
 
 use BenTools\MercurePHP\Security\TopicMatcher;
 use BenTools\MercurePHP\Storage\StorageInterface;
-use BenTools\MercurePHP\Message\Message;
+use BenTools\MercurePHP\Model\Message;
 use Clue\React\Redis\Client as AsynchronousClient;
 use Predis\Client as SynchronousClient;
 use React\Promise\PromiseInterface;

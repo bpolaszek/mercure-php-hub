@@ -2,7 +2,7 @@
 
 namespace BenTools\MercurePHP\Tests\Classes;
 
-use BenTools\MercurePHP\Message\Message;
+use BenTools\MercurePHP\Model\Message;
 use BenTools\MercurePHP\Transport\TransportInterface;
 use React\Promise\PromiseInterface;
 
