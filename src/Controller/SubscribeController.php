@@ -6,12 +6,18 @@ use BenTools\MercurePHP\Configuration\Configuration;
 use BenTools\MercurePHP\Exception\Http\AccessDeniedHttpException;
 use BenTools\MercurePHP\Exception\Http\BadRequestHttpException;
 use BenTools\MercurePHP\Helpers\QueryStringParser;
+use BenTools\MercurePHP\Model\Subscription;
 use BenTools\MercurePHP\Security\Authenticator;
 use BenTools\MercurePHP\Security\TopicMatcher;
 use BenTools\MercurePHP\Model\Message;
+use BenTools\MercurePHP\Storage\StorageInterface;
+use BenTools\MercurePHP\Transport\TransportInterface;
+use Lcobucci\JWT\Token;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Log\LoggerInterface;
+use Ramsey\Uuid\Uuid;
 use React\EventLoop\Factory;
 use React\EventLoop\LoopInterface;
 use React\Http\Message\Response;
@@ -22,6 +28,7 @@ use React\Stream\WritableStreamInterface as Stream;
 use function BenTools\MercurePHP\nullify;
 use function BenTools\QueryString\query_string;
 use function React\Promise\all;
+use function React\Promise\any;
 use function React\Promise\resolve;
 
 final class SubscribeController extends AbstractController
@@ -31,13 +38,22 @@ final class SubscribeController extends AbstractController
     private QueryStringParser $queryStringParser;
     private bool $allowAnonymous;
 
-    public function __construct(array $config, Authenticator $authenticator, ?LoopInterface $loop = null)
-    {
+    public function __construct(
+        array $config,
+        StorageInterface $storage,
+        TransportInterface $transport,
+        Authenticator $authenticator,
+        ?LoopInterface $loop = null,
+        ?LoggerInterface $logger = null
+    ) {
         $this->config = $config;
+        $this->storage = $storage;
+        $this->transport = $transport;
         $this->allowAnonymous = $config[Configuration::ALLOW_ANONYMOUS];
         $this->authenticator = $authenticator;
         $this->queryStringParser = new QueryStringParser();
         $this->loop = $loop ?? Factory::create();
+        $this->logger = $logger;
     }
 
     public function __invoke(Request $request): ResponseInterface
@@ -55,9 +71,10 @@ final class SubscribeController extends AbstractController
         $subscribedTopics = $request->getAttribute('subscribedTopics');
         $this->loop
             ->futureTick(
-                fn() => $this->fetchMissedMessages($lastEventID, $subscribedTopics)
-                        ->then(fn(iterable $messages) => $this->sendMissedMessages($messages, $request, $stream))
-                        ->then(fn() => $this->subscribe($request, $stream))
+                fn() => $this->dispatchSubscriptions($request->getAttribute('subscriptions'))
+                    ->then(fn() => $this->fetchMissedMessages($lastEventID, $subscribedTopics))
+                    ->then(fn(iterable $messages) => $this->sendMissedMessages($messages, $request, $stream))
+                    ->then(fn() => $this->subscribe($request, $stream))
             );
 
         $headers = [
@@ -93,14 +110,66 @@ final class SubscribeController extends AbstractController
             throw new BadRequestHttpException('Missing "topic" parameter.');
         }
 
+        $subscriptions = $this->createSubscriptions(
+            $subscribedTopics,
+            $request->getAttribute('clientId'),
+            $token
+        );
+
         $request = $request
             ->withQueryParams($qs->getParams())
             ->withAttribute('token', $token)
             ->withAttribute('subscribedTopics', $subscribedTopics)
             ->withAttribute('lastEventId', $this->getLastEventID($request, $qs->getParams()))
+            ->withAttribute('subscriptions', $subscriptions)
         ;
 
-        return  $request;
+        return $request;
+    }
+
+    private function createSubscriptions(array $subscribedTopics, string $clientId, ?Token $token): array
+    {
+        if (false === $this->config[Configuration::SUBSCRIPTIONS]) {
+            return [];
+        }
+
+        $subscriptions = [];
+        foreach ($subscribedTopics as $subscribedTopic) {
+            $id = \sprintf('/.well-known/mercure/subscriptions/%s/%s', \urlencode($subscribedTopic), $clientId);
+            try {
+                $payload = null !== $token ? ($token->getClaim('mercure')['payload'] ?? null) : null;
+            } catch (\Exception $e) {
+                $payload = null;
+            }
+            $subscriptions[] = new Subscription(
+                $id,
+                $clientId,
+                $subscribedTopic,
+                true,
+                $payload,
+            );
+        }
+
+        return $subscriptions;
+    }
+
+    /**
+     * @param Subscription[] $subscriptions
+     */
+    private function dispatchSubscriptions(array $subscriptions): PromiseInterface
+    {
+        $promises = [$this->storage->storeSubscriptions($subscriptions)];
+        foreach ($subscriptions as $subscription) {
+            $message = new Message(
+                (string) Uuid::uuid4(),
+                \json_encode($subscription, \JSON_THROW_ON_ERROR),
+                true,
+            );
+            $topic = $subscription->getId();
+            $promises[] = $this->transport->publish($topic, $message);
+        }
+
+        return any($promises);
     }
 
     private function subscribe(Request $request, Stream $stream): PromiseInterface

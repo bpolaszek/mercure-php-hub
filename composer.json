@@ -27,6 +27,7 @@
         "ext-pcntl": "*",
         "bentools/psr7-request-matcher": "^1.1",
         "bentools/querystring": "^1.0",
+        "bentools/uri-factory": "^2.2",
         "clue/block-react": "^1.3",
         "clue/redis-react": "^2.3",
         "lcobucci/jwt": "^3.3",

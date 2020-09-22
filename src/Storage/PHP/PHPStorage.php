@@ -2,26 +2,28 @@
 
 namespace BenTools\MercurePHP\Storage\PHP;
 
+use BenTools\MercurePHP\Model\Message;
+use BenTools\MercurePHP\Model\Subscription;
 use BenTools\MercurePHP\Security\TopicMatcher;
 use BenTools\MercurePHP\Storage\StorageInterface;
-use BenTools\MercurePHP\Model\Message;
 use React\Promise\PromiseInterface;
 
 use function React\Promise\resolve;
 
 final class PHPStorage implements StorageInterface
 {
-    private int $size;
-    private int $currentSize = 0;
+    private int $messagesMaxSize;
+    private int $currentMessagesSize = 0;
+    private array $messages = [];
 
     /**
-     * @var array
+     * @var Subscription[]
      */
-    private array $messages = [];
+    private array $subscriptions = [];
 
     public function __construct(int $size)
     {
-        $this->size = $size;
+        $this->messagesMaxSize = $size;
     }
 
     public function retrieveMessagesAfterId(string $id, array $subscribedTopics): PromiseInterface
@@ -35,17 +37,37 @@ final class PHPStorage implements StorageInterface
 
     public function storeMessage(string $topic, Message $message): PromiseInterface
     {
-        if (0 === $this->size) {
+        if (0 === $this->messagesMaxSize) {
             return resolve(true);
         }
 
-        if ($this->currentSize >= $this->size) {
+        if ($this->currentMessagesSize >= $this->messagesMaxSize) {
             \array_shift($this->messages);
         }
         $this->messages[] = [$topic, $message];
-        $this->currentSize++;
+        $this->currentMessagesSize++;
 
         return resolve(true);
+    }
+
+    public function storeSubscriptions(array $subscriptions): PromiseInterface
+    {
+        foreach ($subscriptions as $subscription) {
+            $this->subscriptions[] = $subscription;
+        }
+
+        return resolve();
+    }
+
+    public function findSubscriptionsBySubscriber(string $subscriber): PromiseInterface
+    {
+        return resolve((function (string $subscriber) {
+            foreach ($this->subscriptions as $subscription) {
+                if ($subscription->getSubscriber() === $subscriber) {
+                    yield $subscription;
+                }
+            }
+        })($subscriber));
     }
 
     private function getMessagesAfterId(string $id, array $subscribedTopics): iterable

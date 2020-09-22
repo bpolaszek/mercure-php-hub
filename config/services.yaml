@@ -22,6 +22,7 @@ parameters:
     subscriber_jwt_key: '%env(default::string:SUBSCRIBER_JWT_KEY)%'
     subscriber_jwt_algorithm: '%env(default::string:SUBSCRIBER_JWT_ALGORITHM)%'
     allow_anonymous: '%env(bool:ALLOW_ANONYMOUS)%'
+    subscriptions: '%env(bool:SUBSCRIPTIONS)%'
 
 services:
     # default configuration for services in *this* file

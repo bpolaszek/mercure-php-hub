@@ -2,13 +2,14 @@
 
 namespace BenTools\MercurePHP\Storage\Redis;
 
+use BenTools\MercurePHP\Model\Message;
 use BenTools\MercurePHP\Security\TopicMatcher;
 use BenTools\MercurePHP\Storage\StorageInterface;
-use BenTools\MercurePHP\Model\Message;
 use Clue\React\Redis\Client as AsynchronousClient;
 use Predis\Client as SynchronousClient;
 use React\Promise\PromiseInterface;
 
+use function React\Promise\all;
 use function React\Promise\resolve;
 
 final class RedisStorage implements StorageInterface
@@ -37,6 +38,44 @@ final class RedisStorage implements StorageInterface
             ->then(fn() => $this->getLastEventId())
             ->then(fn(?string $lastEventId) => $this->storeLastEventId($lastEventId, $id))
             ->then(fn() => $id);
+    }
+
+    public function storeSubscriptions(array $subscriptions): PromiseInterface
+    {
+        $promises = [];
+
+        foreach ($subscriptions as $subscription) {
+            $key = \sprintf(
+                'subscription:%s:%s',
+                $subscription->getSubscriber(),
+                \hash('crc32', $subscription->getId())
+            );
+            /** @phpstan-ignore-next-line */
+            $promises[] = $this->async->set($key, \json_encode($subscription, \JSON_THROW_ON_ERROR));
+        }
+
+        return all($promises);
+    }
+
+    public function findSubscriptionsBySubscriber(string $subscriber): PromiseInterface
+    {
+        $keyPattern = \sprintf(
+            'subscription:%s:*',
+            $subscriber,
+        );
+
+        /** @phpstan-ignore-next-line */
+        return $this->async->keys($keyPattern)
+            ->then(
+                function (array $keys) {
+                    $promises = [];
+                    foreach ($keys as $key) {
+                        $promises[] = $this->async->get($key); /** @phpstan-ignore-line */
+                    }
+
+                    return all($promises);
+                }
+            );
     }
 
     private function getLastEventId(): PromiseInterface

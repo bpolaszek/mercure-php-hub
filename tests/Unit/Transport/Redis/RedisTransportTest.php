@@ -8,6 +8,7 @@ use Clue\React\Redis;
 use React\EventLoop;
 
 use function Clue\React\Block\await;
+use function React\Promise\all;
 
 it('transports messages', function () {
 
@@ -20,12 +21,28 @@ it('transports messages', function () {
         $messages[$topic][] = $message;
     };
 
-    await($transport->subscribe('/foo', $onMessage), $loop);
-    await($transport->subscribe('/bar/{id}', $onMessage), $loop);
-    usleep(50000);
-    await($transport->publish('/foo', new Message('bar')), $loop);
-    await($transport->publish('/foo/bar', new Message('baz')), $loop);
-    await($transport->publish('/bar/baz', new Message('bat')), $loop);
+    $loop->futureTick(
+        function () use ($transport, $onMessage, $loop) {
+            $promises = [
+                $transport->subscribe('/foo', $onMessage),
+                $transport->subscribe('/bar/{id}', $onMessage),
+            ];
+
+            all($promises)->then(
+                function () use ($transport, $loop) {
+                    $promises = [
+                        $transport->publish('/foo', new Message('bar')),
+                        $transport->publish('/foo/bar', new Message('baz')),
+                        $transport->publish('/bar/baz', new Message('bat')),
+                    ];
+
+                    return all($promises)->then(fn() => $loop->stop());
+                }
+            );
+        }
+    );
+
+    $loop->run();
 
     $expected = [
         '/foo' => [new Message('bar')],

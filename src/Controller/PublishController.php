@@ -7,10 +7,13 @@ use BenTools\MercurePHP\Exception\Http\BadRequestHttpException;
 use BenTools\MercurePHP\Security\Authenticator;
 use BenTools\MercurePHP\Security\TopicMatcher;
 use BenTools\MercurePHP\Model\Message;
+use BenTools\MercurePHP\Storage\StorageInterface;
+use BenTools\MercurePHP\Transport\TransportInterface;
 use Lcobucci\JWT\Token;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
 use React\Http\Message\Response;
 
@@ -18,9 +21,16 @@ final class PublishController extends AbstractController
 {
     private Authenticator $authenticator;
 
-    public function __construct(Authenticator $authenticator)
-    {
+    public function __construct(
+        StorageInterface $storage,
+        TransportInterface $transport,
+        Authenticator $authenticator,
+        ?LoggerInterface $logger = null
+    ) {
+        $this->storage = $storage;
+        $this->transport = $transport;
         $this->authenticator = $authenticator;
+        $this->logger = $logger;
     }
 
     public function __invoke(ServerRequestInterface $request): ResponseInterface

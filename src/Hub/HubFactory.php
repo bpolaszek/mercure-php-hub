@@ -67,21 +67,28 @@ final class HubFactory
 
         $controllers = [
             new HealthController(),
-            (new SubscribeController($this->config, $subscriberAuthenticator, $this->loop))
-                ->withTransport($transport)
-                ->withStorage($storage)
-                ->withLogger($this->logger())
-            ,
-            (new PublishController($publisherAuthenticator))
-                ->withTransport($transport)
-                ->withStorage($storage)
-                ->withLogger($this->logger())
-            ,
+            new SubscribeController(
+                $this->config,
+                $storage,
+                $transport,
+                $subscriberAuthenticator,
+                $this->loop,
+                $this->logger()
+            ),
+            new PublishController($storage, $transport, $publisherAuthenticator, $this->logger()),
         ];
 
         $requestHandler = new RequestHandler($controllers);
 
-        return new Hub($this->config, $this->loop, $requestHandler, $metricsHandler, $this->logger());
+        return new Hub(
+            $this->config,
+            $this->loop,
+            $transport,
+            $storage,
+            $requestHandler,
+            $metricsHandler,
+            $this->logger()
+        );
     }
 
     private function createTransport(LoopInterface $loop): TransportInterface

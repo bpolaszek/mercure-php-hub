@@ -18,15 +18,14 @@ use Psr\Http\Message\ServerRequestInterface;
 use RingCentral\Psr7\ServerRequest;
 use RingCentral\Psr7\Uri;
 
+use function BenTools\MercurePHP\get_client_id;
+
 function createController(Configuration $configuration, ?Authenticator $authenticator = null)
 {
     $config = $configuration->asArray();
     $authenticator ??= new Authenticator(new Parser(), new Key($config['jwt_key']), new Sha256());
 
-    return (new SubscribeController($config, $authenticator))
-        ->withTransport(new NullTransport())
-        ->withStorage(new NullStorage())
-        ;
+    return new SubscribeController($config, new NullStorage(), new NullTransport(), $authenticator);
 }
 
 function createJWT(array $claims, string $key, ?int $expires = null): Token
@@ -55,7 +54,9 @@ function createSubscribeRequest(array $subscribedTopics = ['/lobby']): ServerReq
     $uri = $uri->withQuery(
         implode('&', \array_map(fn (string $topic) => 'topic=' . $topic, $subscribedTopics))
     );
-    return (new ServerRequest('GET', $uri));
+
+    return (new ServerRequest('GET', $uri))
+        ->withAttribute('clientId', get_client_id('127.0.0.1', 12345));
 }
 
 it('will respond to the Mercure publish url', function () {

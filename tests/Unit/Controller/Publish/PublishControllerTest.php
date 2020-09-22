@@ -24,10 +24,7 @@ function createController(Configuration $configuration, ?Authenticator $authenti
     $config = $configuration->asArray();
     $authenticator ??= new Authenticator(new Parser(), new Key($config['jwt_key']), new Sha256());
 
-    return (new PublishController($authenticator))
-        ->withStorage(new NullStorage())
-        ->withTransport(new NullTransport())
-        ;
+    return new PublishController(new NullStorage(), new NullTransport(), $authenticator);
 }
 
 function createJWT(array $claims, string $key, ?int $expires = null): Token

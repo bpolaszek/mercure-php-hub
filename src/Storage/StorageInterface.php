@@ -18,4 +18,8 @@ interface StorageInterface
     public function retrieveMessagesAfterId(string $id, array $subscribedTopics): PromiseInterface;
 
     public function storeMessage(string $topic, Message $message): PromiseInterface;
+
+    public function storeSubscriptions(array $subscriptions): PromiseInterface;
+
+    public function findSubscriptionsBySubscriber(string $subscriber): PromiseInterface;
 }

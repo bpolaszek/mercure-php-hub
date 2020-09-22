@@ -22,7 +22,7 @@ it('doesn\'t support other schemes', function () {
 
 it('creates a storage instance', function () {
     $reflClass = new \ReflectionClass(PHPStorage::class);
-    $reflProp = $reflClass->getProperty('size');
+    $reflProp = $reflClass->getProperty('messagesMaxSize');
     $reflProp->setAccessible(true);
 
     $loop = Factory::create();

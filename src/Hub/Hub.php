@@ -5,18 +5,24 @@ namespace BenTools\MercurePHP\Hub;
 use BenTools\MercurePHP\Configuration\Configuration;
 use BenTools\MercurePHP\Helpers\LoggerAwareTrait;
 use BenTools\MercurePHP\Metrics\MetricsHandlerInterface;
+use BenTools\MercurePHP\Model\Message;
+use BenTools\MercurePHP\Model\Subscription;
 use BenTools\MercurePHP\Security\CORS;
+use BenTools\MercurePHP\Storage\StorageInterface;
+use BenTools\MercurePHP\Transport\TransportInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Ramsey\Uuid\Uuid;
 use React\EventLoop\LoopInterface;
 use React\Http;
 use React\Promise\PromiseInterface;
 use React\Socket;
 use React\Socket\ConnectionInterface;
 
+use function React\Promise\all;
 use function React\Promise\resolve;
 
 final class Hub implements RequestHandlerInterface
@@ -25,6 +31,8 @@ final class Hub implements RequestHandlerInterface
 
     private array $config;
     private LoopInterface $loop;
+    private TransportInterface $transport;
+    private StorageInterface $storage;
     private RequestHandlerInterface $requestHandler;
     private CORS $cors;
     private MetricsHandlerInterface $metricsHandler;
@@ -33,12 +41,16 @@ final class Hub implements RequestHandlerInterface
     public function __construct(
         array $config,
         LoopInterface $loop,
+        TransportInterface $transport,
+        StorageInterface $storage,
         RequestHandlerInterface $requestHandler,
         MetricsHandlerInterface $metricsHandler,
         ?LoggerInterface $logger = null
     ) {
         $this->config = $config;
         $this->loop = $loop;
+        $this->transport = $transport;
+        $this->storage = $storage;
         $this->requestHandler = $requestHandler;
         $this->metricsHandler = $metricsHandler;
         $this->logger = $logger ?? new NullLogger();
@@ -75,6 +87,28 @@ final class Hub implements RequestHandlerInterface
         );
     }
 
+    public function dispatchSubscriptions(Subscription ...$subscriptions): PromiseInterface
+    {
+        return $this->storage->storeSubscriptions(...$subscriptions)
+            ->then(
+                function () use ($subscriptions) {
+                    $promises = [];
+                    foreach ($subscriptions as $subscription) {
+                        $promises[] = $this->transport->publish(
+                            $subscription->getId(),
+                            new Message(
+                                (string) Uuid::uuid4(),
+                                \json_encode($subscription, \JSON_THROW_ON_ERROR),
+                                true
+                            )
+                        );
+                    }
+
+                    return all($promises);
+                }
+            );
+    }
+
     public function __invoke(ServerRequestInterface $request): PromiseInterface
     {
         return resolve($this->handle($request));
@@ -89,6 +123,11 @@ final class Hub implements RequestHandlerInterface
         });
 
         return $socket;
+    }
+
+    private function handleClosingConnection(ConnectionInterface $connection, string $localAddress)
+    {
+        //$this->metricsHandler->decrementUsers($localAddress)
     }
 
     private function serve(string $localAddress, Socket\Server $socket, LoopInterface $loop): void
