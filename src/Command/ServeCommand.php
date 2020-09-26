@@ -43,7 +43,7 @@ final class ServeCommand extends Command
             });
 
             $hub = (new HubFactory($config, $logger))->create($loop);
-            $hub->run($loop);
+            $hub->run();
 
             if (\SIGINT === $hub->getShutdownSignal()) {
                 $output->newLine(2);

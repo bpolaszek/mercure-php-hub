@@ -78,7 +78,7 @@ final class HubFactory
 
         $requestHandler = new RequestHandler($controllers);
 
-        return new Hub($this->config, $requestHandler, $metricsHandler, $this->logger());
+        return new Hub($this->config, $loop, $requestHandler, $metricsHandler, $this->logger());
     }
 
     private function createTransport(LoopInterface $loop): TransportInterface
