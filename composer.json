@@ -35,7 +35,7 @@
         "psr/http-server-middleware": "^1.0",
         "psr/log": "^1.1",
         "ramsey/uuid": "^4.0",
-        "react/http": "^0.8.6",
+        "react/http": "^1.0.0",
         "rize/uri-template": "^0.3.2",
         "symfony/console": "^5.1",
         "symfony/string": "^5.1"
@@ -45,7 +45,7 @@
         "bentools/cartesian-product": "^1.3.1",
         "bentools/iterable-functions": "^1.4",
         "bentools/shh": "^1.0",
-        "clue/reactphp-eventsource": "dev-master#8c37dc3a74ea82077857e4a454ab8bcc4374db64",
+        "clue/reactphp-eventsource": "dev-master#e356b73fbf54a491c37d6b571ee5245206cbdc27",
         "friendsofphp/php-cs-fixer": "^2.16",
         "nunomaduro/collision": "^5.0@beta",
         "phpstan/phpstan": "^0.12.25",

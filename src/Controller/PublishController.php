@@ -12,7 +12,7 @@ use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Ramsey\Uuid\Uuid;
-use React\Http;
+use React\Http\Message\Response;
 
 final class PublishController extends AbstractController
 {
@@ -61,7 +61,7 @@ final class PublishController extends AbstractController
             )
         );
 
-        return new Http\Response(
+        return new Response(
             201,
             [
                 'Content-Type' => 'text/plain',
