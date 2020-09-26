@@ -15,8 +15,9 @@ it('yells if it does not recognize the transport scheme', function () {
         Configuration::JWT_KEY => 'foo',
         Configuration::TRANSPORT_URL => 'null://localhost',
     ]);
-    $factory = new HubFactory($config->asArray(), new NullLogger(), new TransportFactory([]));
-    $factory->create(Factory::create());
+    $loop = Factory::create();
+    $factory = new HubFactory($config->asArray(), $loop, new NullLogger(), new TransportFactory([]));
+    $factory->create();
 })
 ->throws(
     \RuntimeException::class,
@@ -29,10 +30,12 @@ it('creates a hub otherwise', function () {
         Configuration::TRANSPORT_URL => 'null://localhost',
         Configuration::METRICS_URL => 'php://localhost',
     ]);
+    $loop = Factory::create();
     $hub = (new HubFactory(
         $config->asArray(),
+        $loop,
         new NullLogger(),
         new NullTransportFactory()
-    ))->create(Factory::create());
+    ))->create();
     \assertInstanceOf(Hub::class, $hub);
 });

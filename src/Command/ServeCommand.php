@@ -42,7 +42,7 @@ final class ServeCommand extends Command
                 $this->displayConfiguration($config, $output);
             });
 
-            $hub = (new HubFactory($config, $logger))->create($loop);
+            $hub = (new HubFactory($config, $loop, $logger))->create();
             $hub->run();
 
             if (\SIGINT === $hub->getShutdownSignal()) {

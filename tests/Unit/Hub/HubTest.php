@@ -36,12 +36,14 @@ $transportFactory = new class implements TransportFactoryInterface {
         return resolve(new NullTransport());
     }
 };
+$loop = Factory::create();
 $hub = (new HubFactory(
     $config->asArray(),
+    $loop,
     new NullLogger(),
     new NullTransportFactory(),
     new NullStorageFactory()
-))->create(Factory::create());
+))->create();
 
 
 it('returns 200 when asking for health', function () use ($hub) {
