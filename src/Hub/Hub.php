@@ -24,6 +24,7 @@ final class Hub implements RequestHandlerInterface
     use LoggerAwareTrait;
 
     private array $config;
+    private LoopInterface $loop;
     private RequestHandlerInterface $requestHandler;
     private CORS $cors;
     private MetricsHandlerInterface $metricsHandler;
@@ -31,26 +32,28 @@ final class Hub implements RequestHandlerInterface
 
     public function __construct(
         array $config,
+        LoopInterface $loop,
         RequestHandlerInterface $requestHandler,
         MetricsHandlerInterface $metricsHandler,
         ?LoggerInterface $logger = null
     ) {
         $this->config = $config;
+        $this->loop = $loop;
         $this->requestHandler = $requestHandler;
         $this->metricsHandler = $metricsHandler;
         $this->logger = $logger ?? new NullLogger();
         $this->cors = new CORS($config);
     }
 
-    public function run(LoopInterface $loop): void
+    public function run(): void
     {
         $localAddress = $this->config[Configuration::ADDR];
         $this->shutdownSignal = null;
         $this->metricsHandler->resetUsers($localAddress);
-        $loop->addSignal(SIGINT, function ($signal) use ($loop) {
-            $this->stop($signal, $loop);
+        $this->loop->addSignal(SIGINT, function ($signal) {
+            $this->stop($signal, $this->loop);
         });
-        $loop->addPeriodicTimer(
+        $this->loop->addPeriodicTimer(
             15,
             fn() => $this->metricsHandler->getNbUsers()->then(
                 function (int $nbUsers) {
@@ -60,8 +63,8 @@ final class Hub implements RequestHandlerInterface
             )
         );
 
-        $socket = $this->createSocketConnection($localAddress, $loop);
-        $this->serve($localAddress, $socket, $loop);
+        $socket = $this->createSocketConnection($localAddress, $this->loop);
+        $this->serve($localAddress, $socket, $this->loop);
     }
 
     public function handle(ServerRequestInterface $request): ResponseInterface

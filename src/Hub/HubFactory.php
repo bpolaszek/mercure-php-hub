@@ -35,36 +35,39 @@ final class HubFactory
     use LoggerAwareTrait;
 
     private array $config;
+    private LoopInterface $loop;
     private ?TransportFactoryInterface $transportFactory;
     private ?StorageFactoryInterface $storageFactory;
     private ?MetricsHandlerFactoryInterface $metricsHandlerFactory;
 
     public function __construct(
         array $config,
+        LoopInterface $loop,
         ?LoggerInterface $logger = null,
         ?TransportFactoryInterface $transportFactory = null,
         ?StorageFactoryInterface $storageFactory = null,
         ?MetricsHandlerFactoryInterface $metricsHandlerFactory = null
     ) {
         $this->config = $config;
+        $this->loop = $loop;
         $this->logger = $logger ?? new NullLogger();
         $this->transportFactory = $transportFactory;
         $this->storageFactory = $storageFactory;
         $this->metricsHandlerFactory = $metricsHandlerFactory;
     }
 
-    public function create(LoopInterface $loop): Hub
+    public function create(): Hub
     {
-        $transport = $this->createTransport($loop);
-        $storage = $this->createStorage($loop);
-        $metricsHandler = $this->createMetricsHandler($loop);
+        $transport = $this->createTransport($this->loop);
+        $storage = $this->createStorage($this->loop);
+        $metricsHandler = $this->createMetricsHandler($this->loop);
 
         $subscriberAuthenticator = Authenticator::createSubscriberAuthenticator($this->config);
         $publisherAuthenticator = Authenticator::createPublisherAuthenticator($this->config);
 
         $controllers = [
             new HealthController(),
-            (new SubscribeController($this->config, $subscriberAuthenticator, $loop))
+            (new SubscribeController($this->config, $subscriberAuthenticator, $this->loop))
                 ->withTransport($transport)
                 ->withStorage($storage)
                 ->withLogger($this->logger())
@@ -78,7 +81,7 @@ final class HubFactory
 
         $requestHandler = new RequestHandler($controllers);
 
-        return new Hub($this->config, $requestHandler, $metricsHandler, $this->logger());
+        return new Hub($this->config, $this->loop, $requestHandler, $metricsHandler, $this->logger());
     }
 
     private function createTransport(LoopInterface $loop): TransportInterface
