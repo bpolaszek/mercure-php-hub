@@ -7,12 +7,14 @@ parameters:
     default_addr: '127.0.0.1:3000'
     default_transport_url: 'php://localhost?size=1000'
     default_jwt_algorithm: 'HS256'
+    default_cors_allowed_origins: '*'
+    default_publish_allowed_origins: '*'
     addr: '%env(default:default_addr:string:ADDR)%'
-    transport_url: '%env(default::string:TRANSPORT_URL)%'
+    transport_url: '%env(default:default_transport_url:string:TRANSPORT_URL)%'
     storage_url: '%env(default::string:STORAGE_URL)%'
     metrics_url: '%env(default::string:METRICS_URL)%'
-    cors_allowed_origins: '%env(default::string:CORS_ALLOWED_ORIGINS)%'
-    publish_allowed_origins: '%env(default::string:PUBLISH_ALLOWED_ORIGINS)%'
+    cors_allowed_origins: '%env(default:default_cors_allowed_origins:string:CORS_ALLOWED_ORIGINS)%'
+    publish_allowed_origins: '%env(default:default_publish_allowed_origins:string:PUBLISH_ALLOWED_ORIGINS)%'
     jwt_key: '%env(default::string:JWT_KEY)%'
     jwt_algorithm: '%env(default:default_jwt_algorithm:string:JWT_ALGORITHM)%'
     publisher_jwt_key: '%env(default::string:PUBLISHER_JWT_KEY)%'
@@ -29,8 +31,22 @@ services:
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
-    BenTools\MercurePHP\:
-        resource: '../src/'
-        exclude:
-            - '../src/Kernel.php'
-            - '../src/functions.php'
+    BenTools\MercurePHP\Command\:
+        resource: '../src/Command/'
+
+    BenTools\MercurePHP\Configuration\Configuration:
+        arguments:
+            $config:
+                addr: '%addr%'
+                transport_url: '%transport_url%'
+                storage_url: '%storage_url%'
+                metrics_url: '%metrics_url%'
+                cors_allowed_origins: '%cors_allowed_origins%'
+                publish_allowed_origins: '%publish_allowed_origins%'
+                jwt_key: '%jwt_key%'
+                jwt_algorithm: '%jwt_algorithm%'
+                publisher_jwt_key: '%publisher_jwt_key%'
+                publisher_jwt_algorithm: '%publisher_jwt_algorithm%'
+                subscriber_jwt_key: '%subscriber_jwt_key%'
+                subscriber_jwt_algorithm: '%subscriber_jwt_algorithm%'
+                allow_anonymous: '%allow_anonymous%'

@@ -6,9 +6,6 @@ use Symfony\Component\Console\Input\InputInterface;
 
 use function BenTools\MercurePHP\nullify;
 
-/**
- * @deprecated
- */
 final class Configuration
 {
     public const ADDR = 'addr';

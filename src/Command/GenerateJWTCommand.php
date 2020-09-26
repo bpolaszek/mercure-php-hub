@@ -12,6 +12,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 use function BenTools\MercurePHP\get_signer;
+use function BenTools\MercurePHP\without_nullish_values;
 
 final class GenerateJWTCommand extends Command
 {
@@ -26,10 +27,18 @@ final class GenerateJWTCommand extends Command
 
     protected static $defaultName = 'mercure:jwt:generate';
 
+    private Configuration $configuration;
+
+    public function __construct(Configuration $configuration)
+    {
+        parent::__construct();
+        $this->configuration = $configuration;
+    }
+
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-        $config = Configuration::bootstrapFromCLI($input)->asArray();
+        $config = $this->configuration->overrideWith(without_nullish_values($input->getOptions()))->asArray();
 
         $target = $input->getOption('target') ?? self::TARGET_BOTH;
         if (!\in_array($target, self::VALID_TARGETS, true)) {

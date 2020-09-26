@@ -3,6 +3,7 @@
 namespace BenTools\MercurePHP;
 
 use Lcobucci\JWT\Signer;
+use Symfony\Component\Console\Input\InputInterface;
 
 function nullify($input)
 {
@@ -28,4 +29,20 @@ function get_signer(string $algorithm): Signer
     }
 
     return $map[$algorithm];
+}
+
+function without_nullish_values(array $array): array
+{
+    return \array_filter(
+        $array,
+        fn($value) => null !== nullify($value) && false !== $value
+    );
+}
+
+function get_options_from_input(InputInterface $input): array
+{
+    return \array_filter(
+        $input->getOptions(),
+        fn($value) => null !== nullify($value) && false !== $value
+    );
 }

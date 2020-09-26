@@ -4,3 +4,6 @@ framework:
 
     php_errors:
         log: true
+
+    router:
+        enabled: false

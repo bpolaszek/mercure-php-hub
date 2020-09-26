@@ -16,17 +16,23 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 use function BenTools\MercurePHP\nullify;
+use function BenTools\MercurePHP\without_nullish_values;
 
 final class ServeCommand extends Command
 {
     protected static $defaultName = 'mercure:serve';
 
+    private Configuration $configuration;
     private LoopInterface $loop;
     private ?LoggerInterface $logger;
 
-    public function __construct(?LoopInterface $loop = null, ?LoggerInterface $logger = null)
-    {
+    public function __construct(
+        Configuration $configuration,
+        ?LoopInterface $loop = null,
+        ?LoggerInterface $logger = null
+    ) {
         parent::__construct();
+        $this->configuration = $configuration;
         $this->loop = $loop ?? Factory::create();
         $this->logger = $logger;
     }
@@ -37,10 +43,12 @@ final class ServeCommand extends Command
         $output = new SymfonyStyle($input, $output);
         $logger = $this->logger ?? new ConsoleLogger($output, [LogLevel::INFO => OutputInterface::VERBOSITY_NORMAL]);
         try {
-            $config = Configuration::bootstrapFromCLI($input)->asArray();
-            $loop->futureTick(function () use ($config, $output) {
-                $this->displayConfiguration($config, $output);
-            });
+            $config = $this->configuration->overrideWith(without_nullish_values($input->getOptions()))->asArray();
+            $loop->futureTick(
+                function () use ($config, $output) {
+                    $this->displayConfiguration($config, $output);
+                }
+            );
 
             $hub = (new HubFactory($config, $loop, $logger))->create();
             $hub->run();
@@ -72,72 +80,72 @@ final class ServeCommand extends Command
             InputOption::VALUE_OPTIONAL,
             'The address to listen on.',
         )
-        ->addOption(
-            'transport-url',
-            null,
-            InputOption::VALUE_OPTIONAL,
-            'The DSN to transport messages.',
-        )
-        ->addOption(
-            'storage-url',
-            null,
-            InputOption::VALUE_OPTIONAL,
-            'The DSN to store messages.',
-        )
-        ->addOption(
-            'metrics-url',
-            null,
-            InputOption::VALUE_OPTIONAL,
-            'The DSN to store metrics.',
-        )
-        ->addOption(
-            'cors-allowed-origins',
-            null,
-            InputOption::VALUE_OPTIONAL,
-            'A list of allowed CORS origins, can be * for all.',
-        )
-        ->addOption(
-            'jwt-key',
-            null,
-            InputOption::VALUE_OPTIONAL,
-            'The JWT key to use for both publishers and subscribers',
-        )
-        ->addOption(
-            'jwt-algorithm',
-            null,
-            InputOption::VALUE_OPTIONAL,
-            'The JWT verification algorithm to use for both publishers and subscribers, e.g. HS256 (default) or RS512.',
-        )
-        ->addOption(
-            'publisher-jwt-key',
-            null,
-            InputOption::VALUE_OPTIONAL,
-            'Must contain the secret key to valid publishers\' JWT, can be omitted if jwt_key is set.',
-        )
-        ->addOption(
-            'publisher-jwt-algorithm',
-            null,
-            InputOption::VALUE_OPTIONAL,
-            'The JWT verification algorithm to use for publishers, e.g. HS256 (default) or RS512.',
-        )
-        ->addOption(
-            'subscriber-jwt-key',
-            null,
-            InputOption::VALUE_OPTIONAL,
-            'Must contain the secret key to valid subscribers\' JWT, can be omitted if jwt_key is set.',
-        )
-        ->addOption(
-            'subscriber-jwt-algorithm',
-            null,
-            InputOption::VALUE_OPTIONAL,
-            'The JWT verification algorithm to use for subscribers, e.g. HS256 (default) or RS512.',
-        )
-        ->addOption(
-            'allow-anonymous',
-            null,
-            InputOption::VALUE_NONE,
-            'Allows subscribers with no valid JWT to connect.',
-        );
+            ->addOption(
+                'transport-url',
+                null,
+                InputOption::VALUE_OPTIONAL,
+                'The DSN to transport messages.',
+            )
+            ->addOption(
+                'storage-url',
+                null,
+                InputOption::VALUE_OPTIONAL,
+                'The DSN to store messages.',
+            )
+            ->addOption(
+                'metrics-url',
+                null,
+                InputOption::VALUE_OPTIONAL,
+                'The DSN to store metrics.',
+            )
+            ->addOption(
+                'cors-allowed-origins',
+                null,
+                InputOption::VALUE_OPTIONAL,
+                'A list of allowed CORS origins, can be * for all.',
+            )
+            ->addOption(
+                'jwt-key',
+                null,
+                InputOption::VALUE_OPTIONAL,
+                'The JWT key to use for both publishers and subscribers',
+            )
+            ->addOption(
+                'jwt-algorithm',
+                null,
+                InputOption::VALUE_OPTIONAL,
+                'The JWT verification algorithm to use for both publishers and subscribers, e.g. HS256 (default) or RS512.',
+            )
+            ->addOption(
+                'publisher-jwt-key',
+                null,
+                InputOption::VALUE_OPTIONAL,
+                'Must contain the secret key to valid publishers\' JWT, can be omitted if jwt_key is set.',
+            )
+            ->addOption(
+                'publisher-jwt-algorithm',
+                null,
+                InputOption::VALUE_OPTIONAL,
+                'The JWT verification algorithm to use for publishers, e.g. HS256 (default) or RS512.',
+            )
+            ->addOption(
+                'subscriber-jwt-key',
+                null,
+                InputOption::VALUE_OPTIONAL,
+                'Must contain the secret key to valid subscribers\' JWT, can be omitted if jwt_key is set.',
+            )
+            ->addOption(
+                'subscriber-jwt-algorithm',
+                null,
+                InputOption::VALUE_OPTIONAL,
+                'The JWT verification algorithm to use for subscribers, e.g. HS256 (default) or RS512.',
+            )
+            ->addOption(
+                'allow-anonymous',
+                null,
+                InputOption::VALUE_NONE,
+                'Allows subscribers with no valid JWT to connect.',
+            );
     }
 
     private function displayConfiguration(array $config, SymfonyStyle $output): void
