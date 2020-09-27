@@ -38,7 +38,11 @@
         "react/http": "^1.0.0",
         "rize/uri-template": "^0.3.2",
         "symfony/console": "^5.1",
-        "symfony/string": "^5.1"
+        "symfony/dotenv": "5.1.*",
+        "symfony/flex": "^1.3.1",
+        "symfony/framework-bundle": "5.1.*",
+        "symfony/string": "^5.1",
+        "symfony/yaml": "5.1.*"
     },
     "require-dev": {
         "ext-dom": "*",
@@ -64,7 +68,7 @@
         "tests:unit:run": "vendor/bin/pest --testsuite=Unit",
         "tests:unit:run:with-coverage": "vendor/bin/pest --testsuite=Unit --coverage-clover=coverage.xml --whitelist=src",
         "tests:integration:run": "vendor/bin/pest --testsuite=Integration",
-        "phpcs:check": "vendor/bin/phpcs --standard=PSR12 -n bin src tests",
+        "phpcs:check": "vendor/bin/phpcs --standard=PSR12 -n bin src tests --ignore=tests/bootstrap.php",
         "phpcs:fix": "vendor/bin/phpcbf --standard=PSR12 -n bin src tests",
         "phpstan:analyze": "vendor/bin/phpstan analyze --level 5 src",
         "ci:check": [
@@ -72,7 +76,11 @@
             "@phpstan:analyze",
             "@tests:unit:run",
             "@tests:integration:run"
-        ]
+        ],
+        "auto-scripts": {
+            "cache:clear": "symfony-cmd",
+            "assets:install %PUBLIC_DIR%": "symfony-cmd"
+        }
     },
     "keywords": [
         "mercure",

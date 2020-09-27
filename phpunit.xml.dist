@@ -23,5 +23,10 @@
         <env name="JWT_KEY" value="AVERYSECRETKEY" />
         <env name="ADDR" value="127.0.0.1:3000" />
         <env name="ALLOW_ANONYMOUS" value="1" />
+
+        <!-- ###+ symfony/framework-bundle ### -->
+        <env name="APP_ENV" value="dev"/>
+        <env name="APP_SECRET" value="914c3fe54e926cec2ba7c0955c046dd5"/>
+        <!-- ###- symfony/framework-bundle ### -->
     </php>
 </phpunit>

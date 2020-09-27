@@ -3,6 +3,7 @@
 namespace BenTools\MercurePHP\Tests\Unit\Command;
 
 use BenTools\MercurePHP\Command\GenerateJWTCommand;
+use BenTools\MercurePHP\Configuration\Configuration;
 use Lcobucci\JWT\Parser;
 use Lcobucci\JWT\Signer\Hmac\Sha256;
 use Lcobucci\JWT\Signer\Key;
@@ -11,6 +12,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
 
 use function BenTools\CartesianProduct\cartesian_product;
+use function BenTools\MercurePHP\without_nullish_values;
 
 $combinations = cartesian_product([
     'publish' => [
@@ -63,7 +65,8 @@ it('returns the desired JWT', function (
         '--ttl' => $ttl,
     ];
 
-    $command = new GenerateJWTCommand();
+    $configuration = (new Configuration())->overrideWith(without_nullish_values($_SERVER));
+    $command = new GenerateJWTCommand($configuration);
         $tester = new CommandTester($command);
         $tester->execute(
             $commandArguments,
@@ -209,7 +212,9 @@ $combinations = cartesian_product(
 it(
     'signs the JWT with the appropriate key & algorithm',
     function (array $commandArguments) use ($publicKey) {
-        $command = new GenerateJWTCommand();
+
+        $configuration = (new Configuration())->overrideWith(without_nullish_values($_SERVER));
+        $command = new GenerateJWTCommand($configuration);
         $tester = new CommandTester($command);
         $tester->execute(
             \array_merge(['--raw' => true], $commandArguments),

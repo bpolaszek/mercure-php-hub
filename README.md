@@ -26,7 +26,11 @@ composer create-project bentools/mercure-php-hub:dev-master
 ```
 
 You can use environment variables (UPPER_SNAKE_CASE) to replace CLI options for better convenience. 
+The hub will also check for the presence of a `/etc/mercure/mercure.env` file, 
+then make use of the [Symfony DotEnv](https://github.com/symfony/dotenv) component to populate variables.
+
 Check out [configuration.php](src/Configuration/Configuration.php#L20) for full configuration options.
+
 
 ## Advantages and limitations
 

@@ -21,15 +21,22 @@ final class Configuration
     public const SUBSCRIBER_JWT_KEY = 'subscriber_jwt_key';
     public const SUBSCRIBER_JWT_ALGORITHM = 'subscriber_jwt_algorithm';
     public const ALLOW_ANONYMOUS = 'allow_anonymous';
+
+    public const DEFAULT_ADDR = '127.0.0.1:3000';
+    public const DEFAULT_TRANSPORT_URL = 'php://localhost?size=1000';
+    public const DEFAULT_JWT_ALGORITHM = 'HS256';
+    public const DEFAULT_CORS_ALLOWED_ORIGINS = '*';
+    public const DEFAULT_PUBLISH_ALLOWED_ORIGINS = '*';
+
     private const DEFAULT_CONFIG = [
-        self::ADDR => '127.0.0.1:3000',
-        self::TRANSPORT_URL => 'php://localhost?size=1000',
+        self::ADDR => self::DEFAULT_ADDR,
+        self::TRANSPORT_URL => self::DEFAULT_TRANSPORT_URL,
         self::STORAGE_URL => null,
         self::METRICS_URL => null,
-        self::CORS_ALLOWED_ORIGINS => '*',
-        self::PUBLISH_ALLOWED_ORIGINS => '*',
+        self::CORS_ALLOWED_ORIGINS => self::DEFAULT_CORS_ALLOWED_ORIGINS,
+        self::PUBLISH_ALLOWED_ORIGINS => self::DEFAULT_PUBLISH_ALLOWED_ORIGINS,
         self::JWT_KEY => null,
-        self::JWT_ALGORITHM => 'HS256',
+        self::JWT_ALGORITHM => self::DEFAULT_JWT_ALGORITHM,
         self::PUBLISHER_JWT_KEY => null,
         self::PUBLISHER_JWT_ALGORITHM => null,
         self::SUBSCRIBER_JWT_KEY => null,
