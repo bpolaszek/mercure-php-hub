@@ -4,11 +4,11 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices/configuration.html#application-related-configuration
 parameters:
-    default_addr: '127.0.0.1:3000'
-    default_transport_url: 'php://localhost?size=1000'
-    default_jwt_algorithm: 'HS256'
-    default_cors_allowed_origins: '*'
-    default_publish_allowed_origins: '*'
+    default_addr: !php/const BenTools\MercurePHP\Configuration\Configuration::DEFAULT_ADDR
+    default_transport_url: !php/const BenTools\MercurePHP\Configuration\Configuration::DEFAULT_TRANSPORT_URL
+    default_jwt_algorithm: !php/const BenTools\MercurePHP\Configuration\Configuration::DEFAULT_JWT_ALGORITHM
+    default_cors_allowed_origins: !php/const BenTools\MercurePHP\Configuration\Configuration::DEFAULT_CORS_ALLOWED_ORIGINS
+    default_publish_allowed_origins: !php/const BenTools\MercurePHP\Configuration\Configuration::DEFAULT_PUBLISH_ALLOWED_ORIGINS
     addr: '%env(default:default_addr:string:ADDR)%'
     transport_url: '%env(default:default_transport_url:string:TRANSPORT_URL)%'
     storage_url: '%env(default::string:STORAGE_URL)%'
