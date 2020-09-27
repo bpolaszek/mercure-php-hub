@@ -28,7 +28,12 @@ if ($input->hasParameterOption('--no-debug', true)) {
     putenv('APP_DEBUG='.$_SERVER['APP_DEBUG'] = $_ENV['APP_DEBUG'] = '0');
 }
 
-(new Dotenv())->bootEnv(dirname(__DIR__).'/.env');
+$dotenv = new Dotenv();
+if (is_readable('/etc/mercure/mercure.env')) {
+    $dotenv->load('/etc/mercure/mercure.env');
+}
+
+$dotenv->bootEnv(dirname(__DIR__).'/.env');
 
 if ($_SERVER['APP_DEBUG']) {
     umask(0000);
