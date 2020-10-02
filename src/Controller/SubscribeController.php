@@ -121,7 +121,7 @@ final class SubscribeController extends AbstractController
             ->withAttribute('token', $token)
             ->withAttribute('subscribedTopics', $subscribedTopics)
             ->withAttribute('lastEventId', $this->getLastEventID($request, $qs->getParams()))
-            ->withAttribute('subscriptions', $subscriptions)
+            ->withAttribute('subscriptions', $subscriptions ?? [])
         ;
 
         return $request;
@@ -133,20 +133,19 @@ final class SubscribeController extends AbstractController
             return [];
         }
 
+        if (null !== $token) {
+            $payload = $token->getClaim('mercure')->payload ?? null;
+        }
+
         $subscriptions = [];
         foreach ($subscribedTopics as $subscribedTopic) {
             $id = \sprintf('/.well-known/mercure/subscriptions/%s/%s', \urlencode($subscribedTopic), $clientId);
-            try {
-                $payload = null !== $token ? ($token->getClaim('mercure')['payload'] ?? null) : null;
-            } catch (\Exception $e) {
-                $payload = null;
-            }
             $subscriptions[] = new Subscription(
                 $id,
                 $clientId,
                 $subscribedTopic,
                 true,
-                $payload,
+                $payload ?? null,
             );
         }
 
@@ -162,7 +161,7 @@ final class SubscribeController extends AbstractController
         foreach ($subscriptions as $subscription) {
             $message = new Message(
                 (string) Uuid::uuid4(),
-                \json_encode($subscription, \JSON_THROW_ON_ERROR),
+                \json_encode($subscription, \JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR),
                 true,
             );
             $topic = $subscription->getId();
