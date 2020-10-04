@@ -78,8 +78,8 @@ final class SubscribeController extends AbstractController
         $subscribedTopics = $request->getAttribute('subscribedTopics');
         $this->loop
             ->futureTick(
-                fn() => $this->dispatchSubscriptions($request->getAttribute('subscriptions'))
-                    ->then(fn() => $this->fetchMissedMessages($lastEventID, $subscribedTopics))
+                fn() => $this->hub->dispatchSubscriptions($request->getAttribute('subscriptions'))
+                    ->then(fn() => $this->hub->fetchMissedMessages($lastEventID, $subscribedTopics))
                     ->then(fn(iterable $messages) => $this->sendMissedMessages($messages, $request, $stream))
                     ->then(fn() => $this->subscribe($request, $stream))
             );
@@ -159,25 +159,6 @@ final class SubscribeController extends AbstractController
         return $subscriptions;
     }
 
-    /**
-     * @param Subscription[] $subscriptions
-     */
-    private function dispatchSubscriptions(array $subscriptions): PromiseInterface
-    {
-        $promises = [$this->storage->storeSubscriptions($subscriptions)];
-        foreach ($subscriptions as $subscription) {
-            $message = new Message(
-                (string) Uuid::uuid4(),
-                \json_encode($subscription, \JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR),
-                true,
-            );
-            $topic = $subscription->getId();
-            $promises[] = $this->transport->publish($topic, $message);
-        }
-
-        return any($promises);
-    }
-
     private function subscribe(Request $request, Stream $stream): PromiseInterface
     {
         $subscribedTopics = $request->getAttribute('subscribedTopics');
@@ -205,15 +186,6 @@ final class SubscribeController extends AbstractController
         }
 
         return all($promises);
-    }
-
-    private function fetchMissedMessages(?string $lastEventID, array $subscribedTopics): PromiseInterface
-    {
-        if (null === $lastEventID) {
-            return resolve([]);
-        }
-
-        return $this->storage->retrieveMessagesAfterId($lastEventID, $subscribedTopics);
     }
 
     private function sendMissedMessages(iterable $messages, Request $request, Stream $stream): PromiseInterface

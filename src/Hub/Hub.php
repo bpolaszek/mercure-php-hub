@@ -116,6 +116,37 @@ final class Hub implements RequestHandlerInterface
         return resolve($this->handle($request));
     }
 
+    public function dispatchSubscriptions(array $subscriptions): PromiseInterface
+    {
+        return $this->storage->storeSubscriptions($subscriptions)
+            ->then(
+                function () use ($subscriptions) {
+                    $promises = [];
+                    foreach ($subscriptions as $subscription) {
+                        $promises[] = $this->transport->publish(
+                            $subscription->getId(),
+                            new Message(
+                                (string) Uuid::uuid4(),
+                                \json_encode($subscription, \JSON_THROW_ON_ERROR),
+                                true
+                            )
+                        );
+                    }
+
+                    return all($promises);
+                }
+            );
+    }
+
+    public function fetchMissedMessages(?string $lastEventID, array $subscribedTopics): PromiseInterface
+    {
+        if (null === $lastEventID) {
+            return resolve([]);
+        }
+
+        return $this->storage->retrieveMessagesAfterId($lastEventID, $subscribedTopics);
+    }
+
     private function createSocketConnection(string $localAddress, LoopInterface $loop): Socket\Server
     {
         $socket = new Socket\Server($localAddress, $loop);
@@ -134,28 +165,6 @@ final class Hub implements RequestHandlerInterface
         $subscriber = get_client_id((string) $remoteHost, (int) (string) $remotePort);
         return $this->storage->findSubscriptionsBySubscriber($subscriber)
             ->then(fn(iterable $subscriptions) => $this->dispatchUnsubscriptions($subscriptions));
-    }
-
-    private function dispatchSubscriptions(Subscription ...$subscriptions): PromiseInterface
-    {
-        return $this->storage->storeSubscriptions(...$subscriptions)
-            ->then(
-                function () use ($subscriptions) {
-                    $promises = [];
-                    foreach ($subscriptions as $subscription) {
-                        $promises[] = $this->transport->publish(
-                            $subscription->getId(),
-                            new Message(
-                                (string) Uuid::uuid4(),
-                                \json_encode($subscription, \JSON_THROW_ON_ERROR),
-                                true
-                            )
-                        );
-                    }
-
-                    return all($promises);
-                }
-            );
     }
 
     /**
