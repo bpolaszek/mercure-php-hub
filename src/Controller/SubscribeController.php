@@ -16,8 +16,6 @@ use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Log\LoggerInterface;
-use React\EventLoop\Factory;
-use React\EventLoop\LoopInterface;
 use React\Http\Message\Response;
 use React\Promise\PromiseInterface;
 use React\Stream\ThroughStream;
@@ -31,7 +29,6 @@ use function React\Promise\resolve;
 final class SubscribeController extends AbstractController
 {
     private Authenticator $authenticator;
-    private LoopInterface $loop;
     private QueryStringParser $queryStringParser;
     private bool $allowAnonymous;
     /**
@@ -43,7 +40,6 @@ final class SubscribeController extends AbstractController
         array $config,
         Hub $hub,
         Authenticator $authenticator,
-        ?LoopInterface $loop = null,
         ?LoggerInterface $logger = null
     ) {
         $this->config = $config;
@@ -51,7 +47,6 @@ final class SubscribeController extends AbstractController
         $this->allowAnonymous = $config[Configuration::ALLOW_ANONYMOUS];
         $this->authenticator = $authenticator;
         $this->queryStringParser = new QueryStringParser();
-        $this->loop = $loop ?? Factory::create();
         $this->logger = $logger;
     }
 
@@ -68,13 +63,12 @@ final class SubscribeController extends AbstractController
 
         $lastEventID = $request->getAttribute('lastEventId');
         $subscribedTopics = $request->getAttribute('subscribedTopics');
-        $this->loop
-            ->futureTick(
-                fn() => $this->hub->dispatchSubscriptions($request->getAttribute('subscriptions'))
-                    ->then(fn() => $this->hub->fetchMissedMessages($lastEventID, $subscribedTopics))
-                    ->then(fn(iterable $messages) => $this->sendMissedMessages($messages, $request, $stream))
-                    ->then(fn() => $this->subscribe($request, $stream))
-            );
+        $this->hub->hook(
+            fn() => $this->hub->dispatchSubscriptions($request->getAttribute('subscriptions'))
+                ->then(fn() => $this->hub->fetchMissedMessages($lastEventID, $subscribedTopics))
+                ->then(fn(iterable $messages) => $this->sendMissedMessages($messages, $request, $stream))
+                ->then(fn() => $this->subscribe($request, $stream))
+        );
 
         $headers = [
             'Content-Type' => 'text/event-stream',

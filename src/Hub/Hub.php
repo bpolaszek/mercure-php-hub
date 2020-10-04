@@ -72,7 +72,6 @@ final class Hub implements RequestHandlerInterface
                 $this->config,
                 $this,
                 $subscriberAuthenticator,
-                $this->loop,
                 $this->logger()
             ),
             new PublishController($this, $publisherAuthenticator),
@@ -101,6 +100,11 @@ final class Hub implements RequestHandlerInterface
 
         $socket = $this->createSocketConnection($localAddress, $this->loop);
         $this->serve($localAddress, $socket, $this->loop);
+    }
+
+    public function hook(callable $callback): void
+    {
+        $this->loop->futureTick($callback);
     }
 
     public function handle(ServerRequestInterface $request): ResponseInterface
