@@ -11,14 +11,12 @@ use BenTools\MercurePHP\Model\Subscription;
 use BenTools\MercurePHP\Security\Authenticator;
 use BenTools\MercurePHP\Security\TopicMatcher;
 use BenTools\MercurePHP\Model\Message;
-use BenTools\MercurePHP\Storage\StorageInterface;
 use BenTools\MercurePHP\Transport\TransportInterface;
 use Lcobucci\JWT\Token;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Log\LoggerInterface;
-use Ramsey\Uuid\Uuid;
 use React\EventLoop\Factory;
 use React\EventLoop\LoopInterface;
 use React\Http\Message\Response;
@@ -29,7 +27,6 @@ use React\Stream\WritableStreamInterface as Stream;
 use function BenTools\MercurePHP\nullify;
 use function BenTools\QueryString\query_string;
 use function React\Promise\all;
-use function React\Promise\any;
 use function React\Promise\resolve;
 
 final class SubscribeController extends AbstractController
@@ -46,7 +43,6 @@ final class SubscribeController extends AbstractController
     public function __construct(
         array $config,
         Hub $hub,
-        StorageInterface $storage,
         TransportInterface $transport,
         Authenticator $authenticator,
         ?LoopInterface $loop = null,
@@ -54,7 +50,6 @@ final class SubscribeController extends AbstractController
     ) {
         $this->config = $config;
         $this->hub = $hub;
-        $this->storage = $storage;
         $this->transport = $transport;
         $this->allowAnonymous = $config[Configuration::ALLOW_ANONYMOUS];
         $this->authenticator = $authenticator;

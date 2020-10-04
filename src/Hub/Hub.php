@@ -69,7 +69,6 @@ final class Hub implements RequestHandlerInterface
             new SubscribeController(
                 $this->config,
                 $this,
-                $storage,
                 $transport,
                 $subscriberAuthenticator,
                 $this->loop,

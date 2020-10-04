@@ -7,7 +7,6 @@ use BenTools\MercurePHP\Controller\SubscribeController;
 use BenTools\MercurePHP\Exception\Http\AccessDeniedHttpException;
 use BenTools\MercurePHP\Exception\Http\BadRequestHttpException;
 use BenTools\MercurePHP\Hub\Hub;
-use BenTools\MercurePHP\Hub\HubFactory;
 use BenTools\MercurePHP\Metrics\PHP\PHPMetricsHandler;
 use BenTools\MercurePHP\Security\Authenticator;
 use BenTools\MercurePHP\Storage\NullStorage\NullStorage;
@@ -33,7 +32,7 @@ function createController(Configuration $configuration, ?Authenticator $authenti
     $storage = new NullStorage();
     $hub = new Hub($config, $loop, $transport, $storage, new PHPMetricsHandler());
 
-    return new SubscribeController($config, $hub, $storage, $transport, $authenticator);
+    return new SubscribeController($config, $hub, $transport, $authenticator);
 }
 
 function createJWT(array $claims, string $key, ?int $expires = null): Token
