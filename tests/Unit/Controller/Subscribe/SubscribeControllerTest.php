@@ -32,7 +32,7 @@ function createController(Configuration $configuration, ?Authenticator $authenti
     $storage = new NullStorage();
     $hub = new Hub($config, $loop, $transport, $storage, new PHPMetricsHandler());
 
-    return new SubscribeController($config, $hub, $transport, $authenticator);
+    return new SubscribeController($config, $hub, $authenticator);
 }
 
 function createJWT(array $claims, string $key, ?int $expires = null): Token

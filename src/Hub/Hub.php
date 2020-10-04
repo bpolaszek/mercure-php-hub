@@ -12,8 +12,10 @@ use BenTools\MercurePHP\Model\Message;
 use BenTools\MercurePHP\Model\Subscription;
 use BenTools\MercurePHP\Security\Authenticator;
 use BenTools\MercurePHP\Security\CORS;
+use BenTools\MercurePHP\Security\TopicMatcher;
 use BenTools\MercurePHP\Storage\StorageInterface;
 use BenTools\MercurePHP\Transport\TransportInterface;
+use Lcobucci\JWT\Token;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
@@ -69,7 +71,6 @@ final class Hub implements RequestHandlerInterface
             new SubscribeController(
                 $this->config,
                 $this,
-                $transport,
                 $subscriberAuthenticator,
                 $this->loop,
                 $this->logger()
@@ -113,6 +114,24 @@ final class Hub implements RequestHandlerInterface
     public function __invoke(ServerRequestInterface $request): PromiseInterface
     {
         return resolve($this->handle($request));
+    }
+
+    public function subscribe(
+        string $subscriber,
+        string $topicSelector,
+        ?Token $token,
+        callable $callback
+    ): PromiseInterface {
+        $allowAnonymous = $this->config[Configuration::ALLOW_ANONYMOUS];
+
+        if (!TopicMatcher::canSubscribeToTopic($topicSelector, $token, $allowAnonymous)) {
+            $this->logger()->debug("Client {$subscriber} cannot subscribe to {$topicSelector}");
+
+            return resolve($topicSelector);
+        }
+
+        $this->logger()->debug("Client {$subscriber} subscribed to {$topicSelector}");
+        return $this->transport->subscribe($topicSelector, $callback);
     }
 
     public function dispatchSubscriptions(array $subscriptions): PromiseInterface

@@ -11,7 +11,6 @@ use BenTools\MercurePHP\Model\Subscription;
 use BenTools\MercurePHP\Security\Authenticator;
 use BenTools\MercurePHP\Security\TopicMatcher;
 use BenTools\MercurePHP\Model\Message;
-use BenTools\MercurePHP\Transport\TransportInterface;
 use Lcobucci\JWT\Token;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -43,14 +42,12 @@ final class SubscribeController extends AbstractController
     public function __construct(
         array $config,
         Hub $hub,
-        TransportInterface $transport,
         Authenticator $authenticator,
         ?LoopInterface $loop = null,
         ?LoggerInterface $logger = null
     ) {
         $this->config = $config;
         $this->hub = $hub;
-        $this->transport = $transport;
         $this->allowAnonymous = $config[Configuration::ALLOW_ANONYMOUS];
         $this->authenticator = $authenticator;
         $this->queryStringParser = new QueryStringParser();
@@ -158,22 +155,15 @@ final class SubscribeController extends AbstractController
     {
         $subscribedTopics = $request->getAttribute('subscribedTopics');
         $token = $request->getAttribute('token');
+        $subscriber = $request->getAttribute('clientId');
         $promises = [];
         foreach ($subscribedTopics as $topicSelector) {
-            if (!TopicMatcher::canSubscribeToTopic($topicSelector, $token, $this->allowAnonymous)) {
-                $clientId = $request->getAttribute('clientId');
-                $this->logger()->debug("Client {$clientId} cannot subscribe to {$topicSelector}");
-                continue;
-            }
-            $promises[] = $this->transport
-                ->subscribe(
-                    $topicSelector,
-                    fn(string $topic, Message $message) => $this->sendIfAllowed($topic, $message, $request, $stream)
-                )
-                ->then(function (string $topic) use ($request) {
-                    $clientId = $request->getAttribute('clientId');
-                    $this->logger()->debug("Client {$clientId} subscribed to {$topic}");
-                });
+            $promises[] = $this->hub->subscribe(
+                $subscriber,
+                $topicSelector,
+                $token,
+                fn(string $topic, Message $message) => $this->sendIfAllowed($topic, $message, $request, $stream)
+            );
         }
 
         if ([] === $promises) {
