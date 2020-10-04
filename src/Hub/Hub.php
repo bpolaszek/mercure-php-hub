@@ -3,10 +3,14 @@
 namespace BenTools\MercurePHP\Hub;
 
 use BenTools\MercurePHP\Configuration\Configuration;
+use BenTools\MercurePHP\Controller\HealthController;
+use BenTools\MercurePHP\Controller\PublishController;
+use BenTools\MercurePHP\Controller\SubscribeController;
 use BenTools\MercurePHP\Helpers\LoggerAwareTrait;
 use BenTools\MercurePHP\Metrics\MetricsHandlerInterface;
 use BenTools\MercurePHP\Model\Message;
 use BenTools\MercurePHP\Model\Subscription;
+use BenTools\MercurePHP\Security\Authenticator;
 use BenTools\MercurePHP\Security\CORS;
 use BenTools\MercurePHP\Storage\StorageInterface;
 use BenTools\MercurePHP\Transport\TransportInterface;
@@ -46,7 +50,6 @@ final class Hub implements RequestHandlerInterface
         LoopInterface $loop,
         TransportInterface $transport,
         StorageInterface $storage,
-        RequestHandlerInterface $requestHandler,
         MetricsHandlerInterface $metricsHandler,
         ?LoggerInterface $logger = null
     ) {
@@ -54,10 +57,28 @@ final class Hub implements RequestHandlerInterface
         $this->loop = $loop;
         $this->transport = $transport;
         $this->storage = $storage;
-        $this->requestHandler = $requestHandler;
         $this->metricsHandler = $metricsHandler;
         $this->logger = $logger ?? new NullLogger();
         $this->cors = new CORS($config);
+
+        $subscriberAuthenticator = Authenticator::createSubscriberAuthenticator($this->config);
+        $publisherAuthenticator = Authenticator::createPublisherAuthenticator($this->config);
+
+        $controllers = [
+            new HealthController(),
+            new SubscribeController(
+                $this->config,
+                $this,
+                $storage,
+                $transport,
+                $subscriberAuthenticator,
+                $this->loop,
+                $this->logger()
+            ),
+            new PublishController($storage, $transport, $publisherAuthenticator, $this->logger()),
+        ];
+
+        $this->requestHandler = new RequestHandler($controllers);
     }
 
     public function run(): void

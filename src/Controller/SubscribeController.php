@@ -6,6 +6,7 @@ use BenTools\MercurePHP\Configuration\Configuration;
 use BenTools\MercurePHP\Exception\Http\AccessDeniedHttpException;
 use BenTools\MercurePHP\Exception\Http\BadRequestHttpException;
 use BenTools\MercurePHP\Helpers\QueryStringParser;
+use BenTools\MercurePHP\Hub\Hub;
 use BenTools\MercurePHP\Model\Subscription;
 use BenTools\MercurePHP\Security\Authenticator;
 use BenTools\MercurePHP\Security\TopicMatcher;
@@ -37,9 +38,14 @@ final class SubscribeController extends AbstractController
     private LoopInterface $loop;
     private QueryStringParser $queryStringParser;
     private bool $allowAnonymous;
+    /**
+     * @var Hub
+     */
+    private Hub $hub;
 
     public function __construct(
         array $config,
+        Hub $hub,
         StorageInterface $storage,
         TransportInterface $transport,
         Authenticator $authenticator,
@@ -47,6 +53,7 @@ final class SubscribeController extends AbstractController
         ?LoggerInterface $logger = null
     ) {
         $this->config = $config;
+        $this->hub = $hub;
         $this->storage = $storage;
         $this->transport = $transport;
         $this->allowAnonymous = $config[Configuration::ALLOW_ANONYMOUS];

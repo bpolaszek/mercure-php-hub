@@ -62,30 +62,11 @@ final class HubFactory
         $storage = $this->createStorage($this->loop);
         $metricsHandler = $this->createMetricsHandler($this->loop);
 
-        $subscriberAuthenticator = Authenticator::createSubscriberAuthenticator($this->config);
-        $publisherAuthenticator = Authenticator::createPublisherAuthenticator($this->config);
-
-        $controllers = [
-            new HealthController(),
-            new SubscribeController(
-                $this->config,
-                $storage,
-                $transport,
-                $subscriberAuthenticator,
-                $this->loop,
-                $this->logger()
-            ),
-            new PublishController($storage, $transport, $publisherAuthenticator, $this->logger()),
-        ];
-
-        $requestHandler = new RequestHandler($controllers);
-
         return new Hub(
             $this->config,
             $this->loop,
             $transport,
             $storage,
-            $requestHandler,
             $metricsHandler,
             $this->logger()
         );
