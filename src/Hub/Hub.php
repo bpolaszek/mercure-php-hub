@@ -75,7 +75,7 @@ final class Hub implements RequestHandlerInterface
                 $this->loop,
                 $this->logger()
             ),
-            new PublishController($storage, $transport, $publisherAuthenticator, $this->logger()),
+            new PublishController($this, $publisherAuthenticator),
         ];
 
         $this->requestHandler = new RequestHandler($controllers);
@@ -132,6 +132,17 @@ final class Hub implements RequestHandlerInterface
 
         $this->logger()->debug("Client {$subscriber} subscribed to {$topicSelector}");
         return $this->transport->subscribe($topicSelector, $callback);
+    }
+
+    public function publish(string $topic, Message $message): PromiseInterface
+    {
+        return $this->transport->publish($topic, $message)
+            ->then(fn() => $this->storage->storeMessage($topic, $message))
+            ->then(
+                function () use ($topic, $message) {
+                    $this->logger()->debug(\sprintf('Created message %s on topic %s', $message->getId(), $topic));
+                }
+            );
     }
 
     public function dispatchSubscriptions(array $subscriptions): PromiseInterface

@@ -4,33 +4,26 @@ namespace BenTools\MercurePHP\Controller;
 
 use BenTools\MercurePHP\Exception\Http\AccessDeniedHttpException;
 use BenTools\MercurePHP\Exception\Http\BadRequestHttpException;
+use BenTools\MercurePHP\Hub\Hub;
 use BenTools\MercurePHP\Security\Authenticator;
 use BenTools\MercurePHP\Security\TopicMatcher;
 use BenTools\MercurePHP\Model\Message;
-use BenTools\MercurePHP\Storage\StorageInterface;
-use BenTools\MercurePHP\Transport\TransportInterface;
 use Lcobucci\JWT\Token;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
 use React\Http\Message\Response;
 
 final class PublishController extends AbstractController
 {
+    private Hub $hub;
     private Authenticator $authenticator;
 
-    public function __construct(
-        StorageInterface $storage,
-        TransportInterface $transport,
-        Authenticator $authenticator,
-        ?LoggerInterface $logger = null
-    ) {
-        $this->storage = $storage;
-        $this->transport = $transport;
+    public function __construct(Hub $hub, Authenticator $authenticator)
+    {
+        $this->hub = $hub;
         $this->authenticator = $authenticator;
-        $this->logger = $logger;
     }
 
     public function __invoke(ServerRequestInterface $request): ResponseInterface
@@ -59,17 +52,7 @@ final class PublishController extends AbstractController
             null !== $input['retry'] ? (int) $input['retry'] : null
         );
 
-        $this->transport
-            ->publish($input['topic'], $message)
-            ->then(fn () => $this->storage->storeMessage($input['topic'], $message));
-
-        $this->logger()->debug(
-            \sprintf(
-                'Created message %s on topic %s',
-                $message->getId(),
-                $input['topic'],
-            )
-        );
+        $this->hub->publish($input['topic'], $message);
 
         return new Response(
             201,
