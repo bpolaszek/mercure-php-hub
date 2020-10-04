@@ -22,8 +22,11 @@ use React\Promise\PromiseInterface;
 use React\Socket;
 use React\Socket\ConnectionInterface;
 
+use function BenTools\MercurePHP\get_client_id;
 use function React\Promise\all;
+use function React\Promise\any;
 use function React\Promise\resolve;
+use function Symfony\Component\String\u;
 
 final class Hub implements RequestHandlerInterface
 {
@@ -87,7 +90,32 @@ final class Hub implements RequestHandlerInterface
         );
     }
 
-    public function dispatchSubscriptions(Subscription ...$subscriptions): PromiseInterface
+    public function __invoke(ServerRequestInterface $request): PromiseInterface
+    {
+        return resolve($this->handle($request));
+    }
+
+    private function createSocketConnection(string $localAddress, LoopInterface $loop): Socket\Server
+    {
+        $socket = new Socket\Server($localAddress, $loop);
+        $socket->on('connection', function (ConnectionInterface $connection) use ($localAddress) {
+            $this->metricsHandler->incrementUsers($localAddress);
+            $connection->on('close', fn() => $this->handleClosingConnection($connection, $localAddress));
+        });
+
+        return $socket;
+    }
+
+    private function handleClosingConnection(ConnectionInterface $connection, string $localAddress): PromiseInterface
+    {
+        $this->metricsHandler->decrementUsers($localAddress);
+        [$remoteHost, $remotePort] = u($connection->getRemoteAddress())->after('//')->split(':');
+        $subscriber = get_client_id((string) $remoteHost, (int) (string) $remotePort);
+        return $this->storage->findSubscriptionsBySubscriber($subscriber)
+            ->then(fn(iterable $subscriptions) => $this->dispatchUnsubscriptions($subscriptions));
+    }
+
+    private function dispatchSubscriptions(Subscription ...$subscriptions): PromiseInterface
     {
         return $this->storage->storeSubscriptions(...$subscriptions)
             ->then(
@@ -109,25 +137,26 @@ final class Hub implements RequestHandlerInterface
             );
     }
 
-    public function __invoke(ServerRequestInterface $request): PromiseInterface
+    /**
+     * @param Subscription[] $subscriptions
+     */
+    private function dispatchUnsubscriptions(iterable $subscriptions): PromiseInterface
     {
-        return resolve($this->handle($request));
-    }
+        $promises = [];
+        foreach ($subscriptions as $subscription) {
+            $subscription->setActive(false);
+            $message = new Message(
+                (string) Uuid::uuid4(),
+                \json_encode($subscription, \JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR),
+                true,
+            );
+            $topic = $subscription->getId();
+            $promises[] = $this->transport->publish($topic, $message);
+        }
 
-    private function createSocketConnection(string $localAddress, LoopInterface $loop): Socket\Server
-    {
-        $socket = new Socket\Server($localAddress, $loop);
-        $socket->on('connection', function (ConnectionInterface $connection) use ($localAddress) {
-            $this->metricsHandler->incrementUsers($localAddress);
-            $connection->on('close', fn() => $this->metricsHandler->decrementUsers($localAddress));
-        });
+        $promises[] = $this->storage->removeSubscriptions($subscriptions);
 
-        return $socket;
-    }
-
-    private function handleClosingConnection(ConnectionInterface $connection, string $localAddress)
-    {
-        //$this->metricsHandler->decrementUsers($localAddress)
+        return any($promises);
     }
 
     private function serve(string $localAddress, Socket\Server $socket, LoopInterface $loop): void

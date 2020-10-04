@@ -30,6 +30,11 @@ final class Subscription implements \JsonSerializable
         return $this->subscriber;
     }
 
+    public function setActive(bool $active): void
+    {
+        $this->active = $active;
+    }
+
     public function jsonSerialize()
     {
         $subscription = [

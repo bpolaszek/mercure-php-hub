@@ -59,6 +59,19 @@ final class PHPStorage implements StorageInterface
         return resolve();
     }
 
+    public function removeSubscriptions(iterable $subscriptions): PromiseInterface
+    {
+        foreach ($subscriptions as $subscription) {
+            foreach ($this->subscriptions as $key => $_subscription) {
+                if ($_subscription->getId() === $subscription->getId()) {
+                    unset($this->subscriptions[$key]);
+                }
+            }
+        }
+
+        return resolve();
+    }
+
     public function findSubscriptionsBySubscriber(string $subscriber): PromiseInterface
     {
         return resolve((function (string $subscriber) {

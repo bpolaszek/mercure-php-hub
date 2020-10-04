@@ -8,16 +8,12 @@ use BenTools\MercurePHP\Exception\Http\NotFoundHttpException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use Ramsey\Uuid\Uuid;
 use React\Http\Message\Response;
 
 use function BenTools\MercurePHP\get_client_id;
-use function BenTools\UriFactory\Helper\uri;
 
 final class RequestHandler implements RequestHandlerInterface
 {
-    private const CLIENT_NAMESPACE = '530344d8-a802-11ea-bb37-0242ac130002';
-
     private array $controllers;
 
     public function __construct(array $controllers)

@@ -3,6 +3,7 @@
 namespace BenTools\MercurePHP\Storage\Redis;
 
 use BenTools\MercurePHP\Model\Message;
+use BenTools\MercurePHP\Model\Subscription;
 use BenTools\MercurePHP\Security\TopicMatcher;
 use BenTools\MercurePHP\Storage\StorageInterface;
 use Clue\React\Redis\Client as AsynchronousClient;
@@ -45,13 +46,22 @@ final class RedisStorage implements StorageInterface
         $promises = [];
 
         foreach ($subscriptions as $subscription) {
-            $key = \sprintf(
-                'subscription:%s:%s',
-                $subscription->getSubscriber(),
-                \hash('crc32', $subscription->getId())
-            );
+            $key = $this->createSubscriptionKey($subscription);
             /** @phpstan-ignore-next-line */
             $promises[] = $this->async->set($key, \json_encode($subscription, \JSON_THROW_ON_ERROR));
+        }
+
+        return all($promises);
+    }
+
+    public function removeSubscriptions(iterable $subscriptions): PromiseInterface
+    {
+        $promises = [];
+
+        foreach ($subscriptions as $subscription) {
+            $key = $this->createSubscriptionKey($subscription);
+            /** @phpstan-ignore-next-line */
+            $promises[] = $this->async->del($key);
         }
 
         return all($promises);
@@ -127,5 +137,14 @@ final class RedisStorage implements StorageInterface
         }
 
         yield from $this->findNextMessages($message->getId(), $subscribedTopics); // Sync client needed because of this
+    }
+
+    private function createSubscriptionKey(Subscription $subscription): string
+    {
+        return \sprintf(
+            'subscription:%s:%s',
+            $subscription->getSubscriber(),
+            \hash('crc32', $subscription->getId())
+        );
     }
 }

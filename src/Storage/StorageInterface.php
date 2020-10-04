@@ -3,6 +3,7 @@
 namespace BenTools\MercurePHP\Storage;
 
 use BenTools\MercurePHP\Model\Message;
+use BenTools\MercurePHP\Model\Subscription;
 use React\Promise\PromiseInterface;
 
 interface StorageInterface
@@ -19,7 +20,15 @@ interface StorageInterface
 
     public function storeMessage(string $topic, Message $message): PromiseInterface;
 
+    /**
+     * @param Subscription[] $subscriptions
+     */
     public function storeSubscriptions(array $subscriptions): PromiseInterface;
+
+    /**
+     * @param Subscription[] $subscriptions
+     */
+    public function removeSubscriptions(iterable $subscriptions): PromiseInterface;
 
     public function findSubscriptionsBySubscriber(string $subscriber): PromiseInterface;
 }

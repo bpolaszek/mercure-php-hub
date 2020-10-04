@@ -3,6 +3,7 @@
 namespace BenTools\MercurePHP\Storage\NullStorage;
 
 use BenTools\MercurePHP\Model\Message;
+use BenTools\MercurePHP\Model\Subscription;
 use BenTools\MercurePHP\Storage\StorageInterface;
 use React\Promise\PromiseInterface;
 
@@ -21,6 +22,11 @@ final class NullStorage implements StorageInterface
     }
 
     public function storeSubscriptions(array $subscriptions): PromiseInterface
+    {
+        return resolve();
+    }
+
+    public function removeSubscriptions(iterable $subscriptions): PromiseInterface
     {
         return resolve();
     }
