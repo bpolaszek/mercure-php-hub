@@ -196,7 +196,7 @@ final class Hub implements RequestHandlerInterface
         $this->metricsHandler->decrementUsers($localAddress);
         [$remoteHost, $remotePort] = u($connection->getRemoteAddress())->after('//')->split(':');
         $subscriber = get_client_id((string) $remoteHost, (int) (string) $remotePort);
-        return $this->storage->findSubscriptionsBySubscriber($subscriber)
+        return $this->storage->findSubscriptions($subscriber)
             ->then(fn(iterable $subscriptions) => $this->dispatchUnsubscriptions($subscriptions));
     }
 

@@ -31,7 +31,7 @@ final class NullStorage implements StorageInterface
         return resolve();
     }
 
-    public function findSubscriptionsBySubscriber(string $subscriber): PromiseInterface
+    public function findSubscriptions(?string $subscriber = null, ?string $topic = null): PromiseInterface
     {
         return resolve([]);
     }

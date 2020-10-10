@@ -72,15 +72,20 @@ final class PHPStorage implements StorageInterface
         return resolve();
     }
 
-    public function findSubscriptionsBySubscriber(string $subscriber): PromiseInterface
+    public function findSubscriptions(?string $subscriber = null, ?string $topic = null): PromiseInterface
     {
-        return resolve((function (string $subscriber) {
-            foreach ($this->subscriptions as $subscription) {
-                if ($subscription->getSubscriber() === $subscriber) {
-                    yield $subscription;
-                }
+        return resolve($this->filterSubscriptions($subscriber, $topic));
+    }
+
+    private function filterSubscriptions(?string $subscriber, ?string $topic): iterable
+    {
+        foreach ($this->subscriptions as $subscription) {
+            $matchSubscriber = (null === $subscriber || $subscription->getSubscriber() === $subscriber);
+            $matchTopic = (null === $topic || TopicMatcher::matchesTopicSelectors($subscription->getTopic(), [$topic]));
+            if ($matchSubscriber && $matchTopic) {
+                yield $subscription;
             }
-        })($subscriber));
+        }
     }
 
     private function getMessagesAfterId(string $id, array $subscribedTopics): iterable

@@ -67,7 +67,7 @@ final class RedisStorage implements StorageInterface
         return all($promises);
     }
 
-    public function findSubscriptionsBySubscriber(string $subscriber): PromiseInterface
+    public function findSubscriptions(?string $subscriber = null, ?string $topic = null): PromiseInterface
     {
         $keyPattern = \sprintf(
             'subscription:%s:*',
