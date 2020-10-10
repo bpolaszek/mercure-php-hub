@@ -8,15 +8,14 @@ final class Subscription implements \JsonSerializable
     private string $id;
     private string $subscriber;
     private string $topic;
-    private bool $active;
+    private bool $active = true;
     private $payload;
 
-    public function __construct(string $id, string $subscriber, string $topic, bool $active, $payload)
+    public function __construct(string $id, string $subscriber, string $topic, $payload = null)
     {
         $this->id = $id;
         $this->subscriber = $subscriber;
         $this->topic = $topic;
-        $this->active = $active;
         $this->payload = $payload;
     }
 
@@ -30,9 +29,24 @@ final class Subscription implements \JsonSerializable
         return $this->subscriber;
     }
 
+    public function isActive(): bool
+    {
+        return $this->active;
+    }
+
     public function setActive(bool $active): void
     {
         $this->active = $active;
+    }
+
+    public function getTopic(): string
+    {
+        return $this->topic;
+    }
+
+    public function getPayload()
+    {
+        return $this->payload;
     }
 
     public function jsonSerialize()

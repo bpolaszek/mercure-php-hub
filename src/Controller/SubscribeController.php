@@ -137,7 +137,6 @@ final class SubscribeController extends AbstractController
                 $id,
                 $clientId,
                 $subscribedTopic,
-                true,
                 $payload ?? null,
             );
         }
