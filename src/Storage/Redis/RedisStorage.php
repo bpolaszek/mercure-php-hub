@@ -69,21 +69,43 @@ final class RedisStorage implements StorageInterface
 
     public function findSubscriptions(?string $subscriber = null, ?string $topic = null): PromiseInterface
     {
-        $keyPattern = \sprintf(
-            'subscription:%s:*',
-            $subscriber,
-        );
+        $keyPattern = null === $subscriber ? 'subscription:*' : \sprintf('subscription:%s:*', $subscriber);
 
         /** @phpstan-ignore-next-line */
         return $this->async->keys($keyPattern)
             ->then(
-                function (array $keys) {
+                function (array $keys) use ($topic) {
                     $promises = [];
                     foreach ($keys as $key) {
                         $promises[] = $this->async->get($key); /** @phpstan-ignore-line */
                     }
 
-                    return all($promises);
+                    return all($promises)->then(
+                        fn(array $subscriptions) => \array_map(
+                            function (string $serialized) {
+                                $data = \json_decode($serialized, true);
+
+                                return new Subscription(
+                                    $data['id'],
+                                    $data['subscriber'],
+                                    $data['topic'],
+                                    $data['payload'] ?? null
+                                );
+                            },
+                            $subscriptions
+                        )
+                    )
+                        ->then(function (array $subscriptions) use ($topic): iterable {
+                            foreach ($subscriptions as $subscription) {
+                                $matchtopic = null === $topic ||  TopicMatcher::matchesTopicSelectors(
+                                    $subscription->getTopic(),
+                                    [$topic]
+                                );
+                                if ($matchtopic) {
+                                    yield $subscription;
+                                }
+                            }
+                        });
                 }
             );
     }

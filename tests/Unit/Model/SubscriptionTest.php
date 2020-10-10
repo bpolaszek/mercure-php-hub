@@ -4,6 +4,7 @@ namespace BenTools\MercurePHP\Tests\Unit\Model;
 
 use BenTools\MercurePHP\Model\Subscription;
 use Ramsey\Uuid\Uuid;
+
 use function BenTools\CartesianProduct\cartesian_product;
 
 $combinations = cartesian_product([
@@ -19,7 +20,7 @@ $combinations = cartesian_product([
     ],
 ]);
 
-it('returns the appropriate subscription object', function(?bool $active, $payload) {
+it('returns the appropriate subscription object', function (?bool $active, $payload) {
     $id = (string) Uuid::uuid4();
     $subscriber = (string) Uuid::uuid4();
     $subscription = new Subscription(
@@ -56,5 +57,4 @@ it('returns the appropriate subscription object', function(?bool $active, $paylo
         \json_encode($expectedJson, \JSON_THROW_ON_ERROR),
         \json_encode($subscription, \JSON_THROW_ON_ERROR)
     );
-
 })->with($combinations);

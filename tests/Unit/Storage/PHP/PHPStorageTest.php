@@ -109,7 +109,7 @@ it('retrieves missed messages', function () {
     \assertEquals($received, \array_slice($flatten($messages()), 1, 1));
 });
 
-it('stores and retrieves subscriptions', function() {
+it('stores and retrieves subscriptions', function () {
 
     $loop = Factory::create();
     $storage = new PHPStorage(1000);
@@ -148,5 +148,4 @@ it('stores and retrieves subscriptions', function() {
     $expected = [$subscriptions[0], $subscriptions[1], $subscriptions[2]];
     $result = \iterable_to_array(await($storage->findSubscriptions(), $loop));
     \assertEquals($expected, $result);
-
 });
