@@ -6,6 +6,7 @@ use BenTools\MercurePHP\Configuration\Configuration;
 use BenTools\MercurePHP\Controller\HealthController;
 use BenTools\MercurePHP\Controller\PublishController;
 use BenTools\MercurePHP\Controller\SubscribeController;
+use BenTools\MercurePHP\Controller\SubscriptionsController;
 use BenTools\MercurePHP\Helpers\LoggerAwareTrait;
 use BenTools\MercurePHP\Metrics\MetricsHandlerInterface;
 use BenTools\MercurePHP\Model\Message;
@@ -76,6 +77,10 @@ final class Hub implements RequestHandlerInterface
             ),
             new PublishController($this, $publisherAuthenticator),
         ];
+
+        if (true === $config[Configuration::SUBSCRIPTIONS]) {
+            $controllers[] = new SubscriptionsController($this, $subscriberAuthenticator);
+        }
 
         $this->requestHandler = new RequestHandler($controllers);
     }
@@ -171,6 +176,11 @@ final class Hub implements RequestHandlerInterface
             );
     }
 
+    public function getActiveSubscriptions(?string $subscriber, ?string $topic): PromiseInterface
+    {
+        return $this->storage->findSubscriptions($subscriber, $topic);
+    }
+
     public function fetchMissedMessages(?string $lastEventID, array $subscribedTopics): PromiseInterface
     {
         if (null === $lastEventID) {
@@ -206,6 +216,7 @@ final class Hub implements RequestHandlerInterface
     private function dispatchUnsubscriptions(iterable $subscriptions): PromiseInterface
     {
         $promises = [];
+        $subscriptions = \iterable_to_array($subscriptions);
         foreach ($subscriptions as $subscription) {
             $subscription->setActive(false);
             $message = new Message(
@@ -219,7 +230,7 @@ final class Hub implements RequestHandlerInterface
 
         $promises[] = $this->storage->removeSubscriptions($subscriptions);
 
-        return any($promises);
+        return all($promises);
     }
 
     private function serve(string $localAddress, Socket\Server $socket, LoopInterface $loop): void
