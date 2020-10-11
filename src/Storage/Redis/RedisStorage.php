@@ -24,7 +24,7 @@ final class RedisStorage implements StorageInterface
         $this->sync = $syncClient;
     }
 
-    public function retrieveMessagesAfterId(string $id, array $subscribedTopics): PromiseInterface
+    public function retrieveMessagesAfterID(string $id, array $subscribedTopics): PromiseInterface
     {
         return resolve($this->findNextMessages($id, $subscribedTopics));
     }
@@ -36,7 +36,7 @@ final class RedisStorage implements StorageInterface
 
         /** @phpstan-ignore-next-line */
         return $this->async->set('data:' . $id, $topic . \PHP_EOL . $payload)
-            ->then(fn() => $this->getLastEventId())
+            ->then(fn() => $this->getLastEventID())
             ->then(fn(?string $lastEventId) => $this->storeLastEventId($lastEventId, $id))
             ->then(fn() => $id);
     }
@@ -67,7 +67,7 @@ final class RedisStorage implements StorageInterface
         return all($promises);
     }
 
-    public function findSubscriptions(?string $subscriber = null, ?string $topic = null): PromiseInterface
+    public function findSubscriptions(?string $topic = null, ?string $subscriber = null): PromiseInterface
     {
         $keyPattern = null === $subscriber ? 'subscription:*' : \sprintf('subscription:%s:*', $subscriber);
 
@@ -110,7 +110,7 @@ final class RedisStorage implements StorageInterface
             );
     }
 
-    private function getLastEventId(): PromiseInterface
+    public function getLastEventID(): PromiseInterface
     {
         return $this->async->get('Last-Event-ID'); /** @phpstan-ignore-line */
     }

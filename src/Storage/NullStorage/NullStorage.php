@@ -11,7 +11,12 @@ use function React\Promise\resolve;
 
 final class NullStorage implements StorageInterface
 {
-    public function retrieveMessagesAfterId(string $id, array $subscribedTopics): PromiseInterface
+    public function getLastEventID(): PromiseInterface
+    {
+        return resolve(null);
+    }
+
+    public function retrieveMessagesAfterID(string $id, array $subscribedTopics): PromiseInterface
     {
         return resolve([]);
     }
@@ -31,7 +36,7 @@ final class NullStorage implements StorageInterface
         return resolve();
     }
 
-    public function findSubscriptions(?string $subscriber = null, ?string $topic = null): PromiseInterface
+    public function findSubscriptions(?string $topic = null, ?string $subscriber = null): PromiseInterface
     {
         return resolve([]);
     }

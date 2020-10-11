@@ -48,7 +48,7 @@ it('retrieves missed messages', function () {
     }
 
     $subscribedTopics = ['*'];
-    $bucket = await($storage->retrieveMessagesAfterId($ids[0], $subscribedTopics), Factory::create());
+    $bucket = await($storage->retrieveMessagesAfterID($ids[0], $subscribedTopics), Factory::create());
     $received = [];
     foreach ($bucket as $topic => $message) {
         $received[] = $message;
@@ -57,7 +57,7 @@ it('retrieves missed messages', function () {
     \assertEquals($received, \array_slice($flatten($messages()), 1, 3));
 
     $subscribedTopics = ['/foo'];
-    $bucket = await($storage->retrieveMessagesAfterId($ids[0], $subscribedTopics), Factory::create());
+    $bucket = await($storage->retrieveMessagesAfterID($ids[0], $subscribedTopics), Factory::create());
     $received = [];
     foreach ($bucket as $topic => $message) {
         $received[] = $message;
@@ -87,22 +87,22 @@ it('stores and retrieves subscriptions', function () {
     usort($result, fn(Subscription $a, Subscription $b) => $a->getId() <=> $b->getId());
     \assertEquals($subscriptions, $result);
 
+    // By topic
+    $expected = [$subscriptions[2], $subscriptions[3]];
+    $result = \iterable_to_array(await($storage->findSubscriptions('/bar/{any}'), $loop));
+    usort($result, fn(Subscription $a, Subscription $b) => $a->getId() <=> $b->getId());
+    \assertEquals($expected, $result);
+
 
     // By subscriber
     $expected = [$subscriptions[0], $subscriptions[2]];
-    $result = \iterable_to_array(await($storage->findSubscriptions('Bob'), $loop));
+    $result = \iterable_to_array(await($storage->findSubscriptions(null, 'Bob'), $loop));
     usort($result, fn(Subscription $a, Subscription $b) => $a->getId() <=> $b->getId());
     \assertEquals($expected, $result);
 
-    // By topic
-    $expected = [$subscriptions[2], $subscriptions[3]];
-    $result = \iterable_to_array(await($storage->findSubscriptions(null, '/bar/{any}'), $loop));
-    usort($result, fn(Subscription $a, Subscription $b) => $a->getId() <=> $b->getId());
-    \assertEquals($expected, $result);
-
-    // By subscriber & topic
+    // By topic & subscriber
     $expected = [$subscriptions[2]];
-    $result = \iterable_to_array(await($storage->findSubscriptions('Bob', '/bar/{any}'), $loop));
+    $result = \iterable_to_array(await($storage->findSubscriptions('/bar/{any}', 'Bob'), $loop));
     usort($result, fn(Subscription $a, Subscription $b) => $a->getId() <=> $b->getId());
     \assertEquals($expected, $result);
 

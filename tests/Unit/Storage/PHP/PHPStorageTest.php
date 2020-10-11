@@ -73,7 +73,7 @@ it('retrieves missed messages', function () {
     }
 
     $subscribedTopics = ['*'];
-    $bucket = await($storage->retrieveMessagesAfterId($storage::EARLIEST, $subscribedTopics), Factory::create());
+    $bucket = await($storage->retrieveMessagesAfterID($storage::EARLIEST, $subscribedTopics), Factory::create());
     $received = [];
     foreach ($bucket as $topic => $message) {
         $received[] = $message;
@@ -82,7 +82,7 @@ it('retrieves missed messages', function () {
     \assertEquals($received, $flatten($messages()));
 
     $subscribedTopics = ['*'];
-    $bucket = await($storage->retrieveMessagesAfterId($ids[0], $subscribedTopics), Factory::create());
+    $bucket = await($storage->retrieveMessagesAfterID($ids[0], $subscribedTopics), Factory::create());
     $received = [];
     foreach ($bucket as $topic => $message) {
         $received[] = $message;
@@ -91,7 +91,7 @@ it('retrieves missed messages', function () {
     \assertEquals($received, \array_slice($flatten($messages()), 1, 3));
 
     $subscribedTopics = ['/foo'];
-    $bucket = await($storage->retrieveMessagesAfterId($storage::EARLIEST, $subscribedTopics), Factory::create());
+    $bucket = await($storage->retrieveMessagesAfterID($storage::EARLIEST, $subscribedTopics), Factory::create());
     $received = [];
     foreach ($bucket as $topic => $message) {
         $received[] = $message;
@@ -100,7 +100,7 @@ it('retrieves missed messages', function () {
     \assertEquals($received, \array_slice($flatten($messages()), 0, 2));
 
     $subscribedTopics = ['/foo'];
-    $bucket = await($storage->retrieveMessagesAfterId($ids[0], $subscribedTopics), Factory::create());
+    $bucket = await($storage->retrieveMessagesAfterID($ids[0], $subscribedTopics), Factory::create());
     $received = [];
     foreach ($bucket as $topic => $message) {
         $received[] = $message;
@@ -128,19 +128,19 @@ it('stores and retrieves subscriptions', function () {
     $result = \iterable_to_array(await($storage->findSubscriptions(), $loop));
     \assertEquals($subscriptions, $result);
 
-    // By subscriber
-    $expected = [$subscriptions[0], $subscriptions[2]];
-    $result = \iterable_to_array(await($storage->findSubscriptions('Bob'), $loop));
-    \assertEquals($expected, $result);
-
     // By topic
     $expected = [$subscriptions[2], $subscriptions[3]];
-    $result = \iterable_to_array(await($storage->findSubscriptions(null, '/bar/{any}'), $loop));
+    $result = \iterable_to_array(await($storage->findSubscriptions('/bar/{any}'), $loop));
     \assertEquals($expected, $result);
 
-    // By subscriber & topic
+    // By subscriber
+    $expected = [$subscriptions[0], $subscriptions[2]];
+    $result = \iterable_to_array(await($storage->findSubscriptions(null, 'Bob'), $loop));
+    \assertEquals($expected, $result);
+
+    // By topic & subscriber
     $expected = [$subscriptions[2]];
-    $result = \iterable_to_array(await($storage->findSubscriptions('Bob', '/bar/{any}'), $loop));
+    $result = \iterable_to_array(await($storage->findSubscriptions('/bar/{any}', 'Bob'), $loop));
     \assertEquals($expected, $result);
 
     // Remove one

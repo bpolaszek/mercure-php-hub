@@ -20,13 +20,19 @@ final class PHPStorage implements StorageInterface
      * @var Subscription[]
      */
     private array $subscriptions = [];
+    private ?string $lastEventID = null;
 
     public function __construct(int $size)
     {
         $this->messagesMaxSize = $size;
     }
 
-    public function retrieveMessagesAfterId(string $id, array $subscribedTopics): PromiseInterface
+    public function getLastEventID(): PromiseInterface
+    {
+        return resolve($this->lastEventID);
+    }
+
+    public function retrieveMessagesAfterID(string $id, array $subscribedTopics): PromiseInterface
     {
         if (self::EARLIEST === $id) {
             return resolve($this->getAllMessages($subscribedTopics));
@@ -46,6 +52,7 @@ final class PHPStorage implements StorageInterface
         }
         $this->messages[] = [$topic, $message];
         $this->currentMessagesSize++;
+        $this->lastEventID = $message->getId();
 
         return resolve(true);
     }
@@ -73,16 +80,24 @@ final class PHPStorage implements StorageInterface
         return resolve();
     }
 
-    public function findSubscriptions(?string $subscriber = null, ?string $topic = null): PromiseInterface
+    public function findSubscriptions(?string $topic = null, ?string $subscriber = null): PromiseInterface
     {
-        return resolve($this->filterSubscriptions($subscriber, $topic));
+        return resolve($this->filterSubscriptions($topic, $subscriber));
     }
 
-    private function filterSubscriptions(?string $subscriber, ?string $topic): iterable
+    private function filterSubscriptions(?string $topic, ?string $subscriber): iterable
     {
         foreach ($this->subscriptions as $subscription) {
-            $matchSubscriber = (null === $subscriber || $subscription->getSubscriber() === $subscriber);
-            $matchTopic = (null === $topic || TopicMatcher::matchesTopicSelectors($subscription->getTopic(), [$topic]));
+            $matchSubscriberPattern = TopicMatcher::matchesTopicSelectors(
+                $subscription->getSubscriber(),
+                [$subscriber ?? '{subscriber}']
+            );
+            $matchSubscriber = (null === $subscriber || $matchSubscriberPattern);
+            $matchTopicPattern = TopicMatcher::matchesTopicSelectors(
+                $subscription->getTopic(),
+                [$topic ?? '{topic}']
+            );
+            $matchTopic = (null === $topic || $matchTopicPattern);
             if ($matchSubscriber && $matchTopic) {
                 yield $subscription;
             }

@@ -176,9 +176,14 @@ final class Hub implements RequestHandlerInterface
             );
     }
 
-    public function getActiveSubscriptions(?string $subscriber, ?string $topic): PromiseInterface
+    public function getActiveSubscriptions(?string $topic, ?string $subscriber): PromiseInterface
     {
-        return $this->storage->findSubscriptions($subscriber, $topic);
+        return $this->storage->findSubscriptions($topic, $subscriber);
+    }
+
+    public function getLastEventID(): PromiseInterface
+    {
+        return $this->storage->getLastEventID();
     }
 
     public function fetchMissedMessages(?string $lastEventID, array $subscribedTopics): PromiseInterface
@@ -187,7 +192,7 @@ final class Hub implements RequestHandlerInterface
             return resolve([]);
         }
 
-        return $this->storage->retrieveMessagesAfterId($lastEventID, $subscribedTopics);
+        return $this->storage->retrieveMessagesAfterID($lastEventID, $subscribedTopics);
     }
 
     private function createSocketConnection(string $localAddress, LoopInterface $loop): Socket\Server
