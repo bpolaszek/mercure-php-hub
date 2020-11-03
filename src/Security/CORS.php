@@ -6,6 +6,8 @@ use BenTools\MercurePHP\Configuration\Configuration;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
+use function BenTools\MercurePHP\nullify;
+
 final class CORS
 {
     private array $subscriberConfig;
@@ -31,7 +33,7 @@ final class CORS
 
     private function getCorsHeaders(ServerRequestInterface $request): array
     {
-        $origin = $request->getHeaderLine('Origin');
+        $origin = nullify($request->getHeaderLine('Origin')) ?? nullify($request->getHeaderLine('Referer'));
         if (!$origin) {
             return [];
         }

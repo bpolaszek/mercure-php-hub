@@ -10,11 +10,11 @@ use RingCentral\Psr7\ServerRequest;
 
 use function BenTools\CartesianProduct\cartesian_product;
 
-function createRequest(string $method, string $origin = null): ServerRequestInterface
+function createRequest(string $method, string $headerName, string $origin = null): ServerRequestInterface
 {
     $request = new ServerRequest($method, '/');
     if (null !== $origin) {
-        $request = $request->withHeader('Origin', $origin);
+        $request = $request->withHeader($headerName, $origin);
     }
 
     return $request;
@@ -37,6 +37,10 @@ $combinations = cartesian_product(
             'http://good.example.com',
             'http://bad.example.com',
             null,
+        ],
+        'header_name' => [
+            'Origin',
+            'Referer',
         ],
         'cors_allowed_origins' => [
             '*',
@@ -81,6 +85,7 @@ it(
     function (
         string $method,
         ?string $origin,
+        string $headerName,
         string $allowedOrigins,
         ?string $publishAllowedOrigins,
         ?string $expected
@@ -92,9 +97,10 @@ it(
                 Configuration::PUBLISH_ALLOWED_ORIGINS => $publishAllowedOrigins,
             ]
         );
-        $request = createRequest($method, $origin);
+        $request = createRequest($method, $headerName, $origin);
         $cors = new CORS($config->asArray());
         $response = $cors->decorateResponse($request, createResponse());
         \assertEquals($expected, $response->getHeaderLine('Access-Control-Allow-Origin'));
+        \assertEquals(200, $response->getStatusCode());
     }
 )->with($combinations);

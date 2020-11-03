@@ -42,11 +42,12 @@ final class SubscribeController extends AbstractController
 
     public function __invoke(Request $request): ResponseInterface
     {
-        $request = $this->withAttributes($request);
 
         if ('OPTIONS' === $request->getMethod()) {
             return new Response(200);
         }
+
+        $request = $this->withAttributes($request);
 
         $stream = new ThroughStream();
 
