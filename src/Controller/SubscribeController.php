@@ -6,14 +6,16 @@ use BenTools\MercurePHP\Configuration\Configuration;
 use BenTools\MercurePHP\Exception\Http\AccessDeniedHttpException;
 use BenTools\MercurePHP\Exception\Http\BadRequestHttpException;
 use BenTools\MercurePHP\Helpers\QueryStringParser;
+use BenTools\MercurePHP\Hub\Hub;
+use BenTools\MercurePHP\Model\Subscription;
 use BenTools\MercurePHP\Security\Authenticator;
 use BenTools\MercurePHP\Security\TopicMatcher;
-use BenTools\MercurePHP\Message\Message;
+use BenTools\MercurePHP\Model\Message;
+use Lcobucci\JWT\Token;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface as Request;
-use React\EventLoop\Factory;
-use React\EventLoop\LoopInterface;
+use Psr\Log\LoggerInterface;
 use React\Http\Message\Response;
 use React\Promise\PromiseInterface;
 use React\Stream\ThroughStream;
@@ -27,17 +29,25 @@ use function React\Promise\resolve;
 final class SubscribeController extends AbstractController
 {
     private Authenticator $authenticator;
-    private LoopInterface $loop;
     private QueryStringParser $queryStringParser;
     private bool $allowAnonymous;
+    /**
+     * @var Hub
+     */
+    private Hub $hub;
 
-    public function __construct(array $config, Authenticator $authenticator, ?LoopInterface $loop = null)
-    {
+    public function __construct(
+        array $config,
+        Hub $hub,
+        Authenticator $authenticator,
+        ?LoggerInterface $logger = null
+    ) {
         $this->config = $config;
+        $this->hub = $hub;
         $this->allowAnonymous = $config[Configuration::ALLOW_ANONYMOUS];
         $this->authenticator = $authenticator;
         $this->queryStringParser = new QueryStringParser();
-        $this->loop = $loop ?? Factory::create();
+        $this->logger = $logger;
     }
 
     public function __invoke(Request $request): ResponseInterface
@@ -53,12 +63,12 @@ final class SubscribeController extends AbstractController
 
         $lastEventID = $request->getAttribute('lastEventId');
         $subscribedTopics = $request->getAttribute('subscribedTopics');
-        $this->loop
-            ->futureTick(
-                fn() => $this->fetchMissedMessages($lastEventID, $subscribedTopics)
-                        ->then(fn(iterable $messages) => $this->sendMissedMessages($messages, $request, $stream))
-                        ->then(fn() => $this->subscribe($request, $stream))
-            );
+        $this->hub->hook(
+            fn() => $this->hub->dispatchSubscriptions($request->getAttribute('subscriptions'))
+                ->then(fn() => $this->hub->fetchMissedMessages($lastEventID, $subscribedTopics))
+                ->then(fn(iterable $messages) => $this->sendMissedMessages($messages, $request, $stream))
+                ->then(fn() => $this->subscribe($request, $stream))
+        );
 
         $headers = [
             'Content-Type' => 'text/event-stream',
@@ -93,36 +103,60 @@ final class SubscribeController extends AbstractController
             throw new BadRequestHttpException('Missing "topic" parameter.');
         }
 
+        $subscriptions = $this->createSubscriptions(
+            $subscribedTopics,
+            $request->getAttribute('clientId'),
+            $token
+        );
+
         $request = $request
             ->withQueryParams($qs->getParams())
             ->withAttribute('token', $token)
             ->withAttribute('subscribedTopics', $subscribedTopics)
             ->withAttribute('lastEventId', $this->getLastEventID($request, $qs->getParams()))
+            ->withAttribute('subscriptions', $subscriptions ?? [])
         ;
 
-        return  $request;
+        return $request;
+    }
+
+    private function createSubscriptions(array $subscribedTopics, string $clientId, ?Token $token): array
+    {
+        if (false === $this->config[Configuration::SUBSCRIPTIONS]) {
+            return [];
+        }
+
+        if (null !== $token) {
+            $payload = $token->getClaim('mercure')->payload ?? null;
+        }
+
+        $subscriptions = [];
+        foreach ($subscribedTopics as $subscribedTopic) {
+            $id = \sprintf('/.well-known/mercure/subscriptions/%s/%s', \urlencode($subscribedTopic), $clientId);
+            $subscriptions[] = new Subscription(
+                $id,
+                $clientId,
+                $subscribedTopic,
+                $payload ?? null,
+            );
+        }
+
+        return $subscriptions;
     }
 
     private function subscribe(Request $request, Stream $stream): PromiseInterface
     {
         $subscribedTopics = $request->getAttribute('subscribedTopics');
         $token = $request->getAttribute('token');
+        $subscriber = $request->getAttribute('clientId');
         $promises = [];
         foreach ($subscribedTopics as $topicSelector) {
-            if (!TopicMatcher::canSubscribeToTopic($topicSelector, $token, $this->allowAnonymous)) {
-                $clientId = $request->getAttribute('clientId');
-                $this->logger()->debug("Client {$clientId} cannot subscribe to {$topicSelector}");
-                continue;
-            }
-            $promises[] = $this->transport
-                ->subscribe(
-                    $topicSelector,
-                    fn(string $topic, Message $message) => $this->sendIfAllowed($topic, $message, $request, $stream)
-                )
-                ->then(function (string $topic) use ($request) {
-                    $clientId = $request->getAttribute('clientId');
-                    $this->logger()->debug("Client {$clientId} subscribed to {$topic}");
-                });
+            $promises[] = $this->hub->subscribe(
+                $subscriber,
+                $topicSelector,
+                $token,
+                fn(string $topic, Message $message) => $this->sendIfAllowed($topic, $message, $request, $stream)
+            );
         }
 
         if ([] === $promises) {
@@ -130,15 +164,6 @@ final class SubscribeController extends AbstractController
         }
 
         return all($promises);
-    }
-
-    private function fetchMissedMessages(?string $lastEventID, array $subscribedTopics): PromiseInterface
-    {
-        if (null === $lastEventID) {
-            return resolve([]);
-        }
-
-        return $this->storage->retrieveMessagesAfterId($lastEventID, $subscribedTopics);
     }
 
     private function sendMissedMessages(iterable $messages, Request $request, Stream $stream): PromiseInterface

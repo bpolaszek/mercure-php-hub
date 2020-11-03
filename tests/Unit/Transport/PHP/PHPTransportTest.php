@@ -2,7 +2,7 @@
 
 namespace BenTools\MercurePHP\Tests\Unit\Transport\PHP;
 
-use BenTools\MercurePHP\Message\Message;
+use BenTools\MercurePHP\Model\Message;
 use BenTools\MercurePHP\Transport\PHP\PHPTransport;
 use React\EventLoop;
 

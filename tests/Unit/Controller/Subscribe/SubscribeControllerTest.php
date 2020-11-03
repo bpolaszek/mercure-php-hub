@@ -6,6 +6,8 @@ use BenTools\MercurePHP\Configuration\Configuration;
 use BenTools\MercurePHP\Controller\SubscribeController;
 use BenTools\MercurePHP\Exception\Http\AccessDeniedHttpException;
 use BenTools\MercurePHP\Exception\Http\BadRequestHttpException;
+use BenTools\MercurePHP\Hub\Hub;
+use BenTools\MercurePHP\Metrics\PHP\PHPMetricsHandler;
 use BenTools\MercurePHP\Security\Authenticator;
 use BenTools\MercurePHP\Storage\NullStorage\NullStorage;
 use BenTools\MercurePHP\Tests\Classes\NullTransport;
@@ -15,18 +17,22 @@ use Lcobucci\JWT\Signer\Hmac\Sha256;
 use Lcobucci\JWT\Signer\Key;
 use Lcobucci\JWT\Token;
 use Psr\Http\Message\ServerRequestInterface;
+use React\EventLoop\Factory;
 use RingCentral\Psr7\ServerRequest;
 use RingCentral\Psr7\Uri;
+
+use function BenTools\MercurePHP\get_client_id;
 
 function createController(Configuration $configuration, ?Authenticator $authenticator = null)
 {
     $config = $configuration->asArray();
     $authenticator ??= new Authenticator(new Parser(), new Key($config['jwt_key']), new Sha256());
+    $loop = Factory::create();
+    $transport = new NullTransport();
+    $storage = new NullStorage();
+    $hub = new Hub($config, $loop, $transport, $storage, new PHPMetricsHandler());
 
-    return (new SubscribeController($config, $authenticator))
-        ->withTransport(new NullTransport())
-        ->withStorage(new NullStorage())
-        ;
+    return new SubscribeController($config, $hub, $authenticator);
 }
 
 function createJWT(array $claims, string $key, ?int $expires = null): Token
@@ -55,7 +61,9 @@ function createSubscribeRequest(array $subscribedTopics = ['/lobby']): ServerReq
     $uri = $uri->withQuery(
         implode('&', \array_map(fn (string $topic) => 'topic=' . $topic, $subscribedTopics))
     );
-    return (new ServerRequest('GET', $uri));
+
+    return (new ServerRequest('GET', $uri))
+        ->withAttribute('clientId', get_client_id('127.0.0.1', 12345));
 }
 
 it('will respond to the Mercure publish url', function () {

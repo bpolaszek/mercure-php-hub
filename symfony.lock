@@ -1,8 +1,14 @@
 {
+    "bentools/uri-factory": {
+        "version": "2.2"
+    },
     "php": {
         "version": "7.4"
     },
     "psr/cache": {
+        "version": "1.0.1"
+    },
+    "psr/http-factory": {
         "version": "1.0.1"
     },
     "symfony/cache": {

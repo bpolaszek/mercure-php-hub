@@ -52,7 +52,11 @@ it(
     function () use ($controllers) {
         $requestHandler = new RequestHandler($controllers);
 
-        $request = new ServerRequest('POST', '/foo');
+        $serverParams = [
+            'REMOTE_ADDR' => '127.0.0.1',
+            'REMOTE_PORT' => 12345,
+        ];
+        $request = new ServerRequest('POST', '/foo', [], null, '1.1', $serverParams);
         $response = $requestHandler->handle($request);
         \assertEquals(200, $response->getStatusCode());
         \assertEquals('bar', $response->getBody());
@@ -64,7 +68,11 @@ it(
     function () use ($controllers) {
         $requestHandler = new RequestHandler($controllers);
 
-        $request = new ServerRequest('POST', '/bad');
+        $serverParams = [
+            'REMOTE_ADDR' => '127.0.0.1',
+            'REMOTE_PORT' => 12345,
+        ];
+        $request = new ServerRequest('POST', '/bad', [], null, '1.1', $serverParams);
         $response = $requestHandler->handle($request);
         \assertEquals(400, $response->getStatusCode());
         \assertEquals('Nope.', $response->getBody());
@@ -76,7 +84,11 @@ it(
     function () use ($controllers) {
         $requestHandler = new RequestHandler($controllers);
 
-        $request = new ServerRequest('POST', '/unknown');
+        $serverParams = [
+            'REMOTE_ADDR' => '127.0.0.1',
+            'REMOTE_PORT' => 12345,
+        ];
+        $request = new ServerRequest('POST', '/unknown', [], null, '1.1', $serverParams);
         $response = $requestHandler->handle($request);
         \assertEquals(404, $response->getStatusCode());
         \assertEquals('Not found.', $response->getBody());

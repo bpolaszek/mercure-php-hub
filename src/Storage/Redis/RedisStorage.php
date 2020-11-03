@@ -2,13 +2,15 @@
 
 namespace BenTools\MercurePHP\Storage\Redis;
 
+use BenTools\MercurePHP\Model\Message;
+use BenTools\MercurePHP\Model\Subscription;
 use BenTools\MercurePHP\Security\TopicMatcher;
 use BenTools\MercurePHP\Storage\StorageInterface;
-use BenTools\MercurePHP\Message\Message;
 use Clue\React\Redis\Client as AsynchronousClient;
 use Predis\Client as SynchronousClient;
 use React\Promise\PromiseInterface;
 
+use function React\Promise\all;
 use function React\Promise\resolve;
 
 final class RedisStorage implements StorageInterface
@@ -22,7 +24,7 @@ final class RedisStorage implements StorageInterface
         $this->sync = $syncClient;
     }
 
-    public function retrieveMessagesAfterId(string $id, array $subscribedTopics): PromiseInterface
+    public function retrieveMessagesAfterID(string $id, array $subscribedTopics): PromiseInterface
     {
         return resolve($this->findNextMessages($id, $subscribedTopics));
     }
@@ -34,12 +36,81 @@ final class RedisStorage implements StorageInterface
 
         /** @phpstan-ignore-next-line */
         return $this->async->set('data:' . $id, $topic . \PHP_EOL . $payload)
-            ->then(fn() => $this->getLastEventId())
+            ->then(fn() => $this->getLastEventID())
             ->then(fn(?string $lastEventId) => $this->storeLastEventId($lastEventId, $id))
             ->then(fn() => $id);
     }
 
-    private function getLastEventId(): PromiseInterface
+    public function storeSubscriptions(array $subscriptions): PromiseInterface
+    {
+        $promises = [];
+
+        foreach ($subscriptions as $subscription) {
+            $key = $this->createSubscriptionKey($subscription);
+            /** @phpstan-ignore-next-line */
+            $promises[] = $this->async->set($key, \json_encode($subscription, \JSON_THROW_ON_ERROR));
+        }
+
+        return all($promises);
+    }
+
+    public function removeSubscriptions(iterable $subscriptions): PromiseInterface
+    {
+        $promises = [];
+
+        foreach ($subscriptions as $subscription) {
+            $key = $this->createSubscriptionKey($subscription);
+            /** @phpstan-ignore-next-line */
+            $promises[] = $this->async->del($key);
+        }
+
+        return all($promises);
+    }
+
+    public function findSubscriptions(?string $topic = null, ?string $subscriber = null): PromiseInterface
+    {
+        $keyPattern = null === $subscriber ? 'subscription:*' : \sprintf('subscription:%s:*', $subscriber);
+
+        /** @phpstan-ignore-next-line */
+        return $this->async->keys($keyPattern)
+            ->then(
+                function (array $keys) use ($topic) {
+                    $promises = [];
+                    foreach ($keys as $key) {
+                        $promises[] = $this->async->get($key); /** @phpstan-ignore-line */
+                    }
+
+                    return all($promises)->then(
+                        fn(array $subscriptions) => \array_map(
+                            function (string $serialized) {
+                                $data = \json_decode($serialized, true);
+
+                                return new Subscription(
+                                    $data['id'],
+                                    $data['subscriber'],
+                                    $data['topic'],
+                                    $data['payload'] ?? null
+                                );
+                            },
+                            $subscriptions
+                        )
+                    )
+                        ->then(function (array $subscriptions) use ($topic): iterable {
+                            foreach ($subscriptions as $subscription) {
+                                $matchtopic = null === $topic ||  TopicMatcher::matchesTopicSelectors(
+                                    $subscription->getTopic(),
+                                    [$topic]
+                                );
+                                if ($matchtopic) {
+                                    yield $subscription;
+                                }
+                            }
+                        });
+                }
+            );
+    }
+
+    public function getLastEventID(): PromiseInterface
     {
         return $this->async->get('Last-Event-ID'); /** @phpstan-ignore-line */
     }
@@ -88,5 +159,14 @@ final class RedisStorage implements StorageInterface
         }
 
         yield from $this->findNextMessages($message->getId(), $subscribedTopics); // Sync client needed because of this
+    }
+
+    private function createSubscriptionKey(Subscription $subscription): string
+    {
+        return \sprintf(
+            'subscription:%s:%s',
+            $subscription->getSubscriber(),
+            \hash('crc32', $subscription->getId())
+        );
     }
 }

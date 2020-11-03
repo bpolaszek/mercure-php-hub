@@ -4,9 +4,10 @@ namespace BenTools\MercurePHP\Controller;
 
 use BenTools\MercurePHP\Exception\Http\AccessDeniedHttpException;
 use BenTools\MercurePHP\Exception\Http\BadRequestHttpException;
+use BenTools\MercurePHP\Hub\Hub;
 use BenTools\MercurePHP\Security\Authenticator;
 use BenTools\MercurePHP\Security\TopicMatcher;
-use BenTools\MercurePHP\Message\Message;
+use BenTools\MercurePHP\Model\Message;
 use Lcobucci\JWT\Token;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -16,10 +17,12 @@ use React\Http\Message\Response;
 
 final class PublishController extends AbstractController
 {
+    private Hub $hub;
     private Authenticator $authenticator;
 
-    public function __construct(Authenticator $authenticator)
+    public function __construct(Hub $hub, Authenticator $authenticator)
     {
+        $this->hub = $hub;
         $this->authenticator = $authenticator;
     }
 
@@ -49,17 +52,7 @@ final class PublishController extends AbstractController
             null !== $input['retry'] ? (int) $input['retry'] : null
         );
 
-        $this->transport
-            ->publish($input['topic'], $message)
-            ->then(fn () => $this->storage->storeMessage($input['topic'], $message));
-
-        $this->logger()->debug(
-            \sprintf(
-                'Created message %s on topic %s',
-                $message->getId(),
-                $input['topic'],
-            )
-        );
+        $this->hub->publish($input['topic'], $message);
 
         return new Response(
             201,

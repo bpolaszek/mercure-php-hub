@@ -8,13 +8,12 @@ use BenTools\MercurePHP\Exception\Http\NotFoundHttpException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use Ramsey\Uuid\Uuid;
 use React\Http\Message\Response;
+
+use function BenTools\MercurePHP\get_client_id;
 
 final class RequestHandler implements RequestHandlerInterface
 {
-    private const CLIENT_NAMESPACE = '530344d8-a802-11ea-bb37-0242ac130002';
-
     private array $controllers;
 
     public function __construct(array $controllers)
@@ -55,10 +54,7 @@ final class RequestHandler implements RequestHandlerInterface
     {
         if (null === $request->getAttribute('clientId')) {
             $serverParams = $request->getServerParams();
-            $clientId = Uuid::uuid5(
-                self::CLIENT_NAMESPACE,
-                ($serverParams['REMOTE_ADDR'] ?? '') . ':' . ($serverParams['REMOTE_PORT'] ?? '')
-            );
+            $clientId = get_client_id($serverParams['REMOTE_ADDR'], (int) $serverParams['REMOTE_PORT']);
             $request = $request->withAttribute('clientId', $clientId);
         }
 

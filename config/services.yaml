@@ -9,19 +9,6 @@ parameters:
     default_jwt_algorithm: !php/const BenTools\MercurePHP\Configuration\Configuration::DEFAULT_JWT_ALGORITHM
     default_cors_allowed_origins: !php/const BenTools\MercurePHP\Configuration\Configuration::DEFAULT_CORS_ALLOWED_ORIGINS
     default_publish_allowed_origins: !php/const BenTools\MercurePHP\Configuration\Configuration::DEFAULT_PUBLISH_ALLOWED_ORIGINS
-    addr: '%env(default:default_addr:string:ADDR)%'
-    transport_url: '%env(default:default_transport_url:string:TRANSPORT_URL)%'
-    storage_url: '%env(default::string:STORAGE_URL)%'
-    metrics_url: '%env(default::string:METRICS_URL)%'
-    cors_allowed_origins: '%env(default:default_cors_allowed_origins:string:CORS_ALLOWED_ORIGINS)%'
-    publish_allowed_origins: '%env(default:default_publish_allowed_origins:string:PUBLISH_ALLOWED_ORIGINS)%'
-    jwt_key: '%env(default::string:JWT_KEY)%'
-    jwt_algorithm: '%env(default:default_jwt_algorithm:string:JWT_ALGORITHM)%'
-    publisher_jwt_key: '%env(default::string:PUBLISHER_JWT_KEY)%'
-    publisher_jwt_algorithm: '%env(default::string:PUBLISHER_JWT_ALGORITHM)%'
-    subscriber_jwt_key: '%env(default::string:SUBSCRIBER_JWT_KEY)%'
-    subscriber_jwt_algorithm: '%env(default::string:SUBSCRIBER_JWT_ALGORITHM)%'
-    allow_anonymous: '%env(bool:ALLOW_ANONYMOUS)%'
 
 services:
     # default configuration for services in *this* file
@@ -37,16 +24,17 @@ services:
     BenTools\MercurePHP\Configuration\Configuration:
         arguments:
             $config:
-                addr: '%addr%'
-                transport_url: '%transport_url%'
-                storage_url: '%storage_url%'
-                metrics_url: '%metrics_url%'
-                cors_allowed_origins: '%cors_allowed_origins%'
-                publish_allowed_origins: '%publish_allowed_origins%'
-                jwt_key: '%jwt_key%'
-                jwt_algorithm: '%jwt_algorithm%'
-                publisher_jwt_key: '%publisher_jwt_key%'
-                publisher_jwt_algorithm: '%publisher_jwt_algorithm%'
-                subscriber_jwt_key: '%subscriber_jwt_key%'
-                subscriber_jwt_algorithm: '%subscriber_jwt_algorithm%'
-                allow_anonymous: '%allow_anonymous%'
+                addr: '%env(default:default_addr:string:ADDR)%'
+                transport_url: '%env(default:default_transport_url:string:TRANSPORT_URL)%'
+                storage_url: '%env(default::string:STORAGE_URL)%'
+                metrics_url: '%env(default::string:METRICS_URL)%'
+                cors_allowed_origins: '%env(default:default_cors_allowed_origins:string:CORS_ALLOWED_ORIGINS)%'
+                publish_allowed_origins: '%env(default:default_publish_allowed_origins:string:PUBLISH_ALLOWED_ORIGINS)%'
+                jwt_key: '%env(default::string:JWT_KEY)%'
+                jwt_algorithm: '%env(default:default_jwt_algorithm:string:JWT_ALGORITHM)%'
+                publisher_jwt_key: '%env(default::string:PUBLISHER_JWT_KEY)%'
+                publisher_jwt_algorithm: '%env(default::string:PUBLISHER_JWT_ALGORITHM)%'
+                subscriber_jwt_key: '%env(default::string:SUBSCRIBER_JWT_KEY)%'
+                subscriber_jwt_algorithm: '%env(default::string:SUBSCRIBER_JWT_ALGORITHM)%'
+                allow_anonymous: '%env(bool:ALLOW_ANONYMOUS)%'
+                subscriptions: '%env(bool:SUBSCRIPTIONS)%'

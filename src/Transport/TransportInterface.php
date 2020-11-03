@@ -2,7 +2,7 @@
 
 namespace BenTools\MercurePHP\Transport;
 
-use BenTools\MercurePHP\Message\Message;
+use BenTools\MercurePHP\Model\Message;
 use React\Promise\PromiseInterface;
 
 interface TransportInterface

@@ -21,6 +21,7 @@ final class Configuration
     public const SUBSCRIBER_JWT_KEY = 'subscriber_jwt_key';
     public const SUBSCRIBER_JWT_ALGORITHM = 'subscriber_jwt_algorithm';
     public const ALLOW_ANONYMOUS = 'allow_anonymous';
+    public const SUBSCRIPTIONS = 'subscriptions';
 
     public const DEFAULT_ADDR = '127.0.0.1:3000';
     public const DEFAULT_TRANSPORT_URL = 'php://localhost?size=1000';
@@ -42,6 +43,7 @@ final class Configuration
         self::SUBSCRIBER_JWT_KEY => null,
         self::SUBSCRIBER_JWT_ALGORITHM => null,
         self::ALLOW_ANONYMOUS => false,
+        self::SUBSCRIPTIONS => false,
     ];
 
     private array $config = self::DEFAULT_CONFIG;

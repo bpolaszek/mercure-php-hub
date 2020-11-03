@@ -6,6 +6,8 @@ use BenTools\MercurePHP\Configuration\Configuration;
 use BenTools\MercurePHP\Controller\PublishController;
 use BenTools\MercurePHP\Exception\Http\AccessDeniedHttpException;
 use BenTools\MercurePHP\Exception\Http\BadRequestHttpException;
+use BenTools\MercurePHP\Hub\Hub;
+use BenTools\MercurePHP\Metrics\PHP\PHPMetricsHandler;
 use BenTools\MercurePHP\Security\Authenticator;
 use BenTools\MercurePHP\Storage\NullStorage\NullStorage;
 use BenTools\MercurePHP\Tests\Classes\NullTransport;
@@ -17,17 +19,19 @@ use Lcobucci\JWT\Token;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Ramsey\Uuid\Uuid;
+use React\EventLoop\Factory;
 use RingCentral\Psr7\ServerRequest;
 
 function createController(Configuration $configuration, ?Authenticator $authenticator = null)
 {
     $config = $configuration->asArray();
     $authenticator ??= new Authenticator(new Parser(), new Key($config['jwt_key']), new Sha256());
+    $loop = Factory::create();
+    $transport = new NullTransport();
+    $storage = new NullStorage();
+    $hub = new Hub($config, $loop, $transport, $storage, new PHPMetricsHandler());
 
-    return (new PublishController($authenticator))
-        ->withStorage(new NullStorage())
-        ->withTransport(new NullTransport())
-        ;
+    return new PublishController($hub, $authenticator);
 }
 
 function createJWT(array $claims, string $key, ?int $expires = null): Token

@@ -62,26 +62,14 @@ final class HubFactory
         $storage = $this->createStorage($this->loop);
         $metricsHandler = $this->createMetricsHandler($this->loop);
 
-        $subscriberAuthenticator = Authenticator::createSubscriberAuthenticator($this->config);
-        $publisherAuthenticator = Authenticator::createPublisherAuthenticator($this->config);
-
-        $controllers = [
-            new HealthController(),
-            (new SubscribeController($this->config, $subscriberAuthenticator, $this->loop))
-                ->withTransport($transport)
-                ->withStorage($storage)
-                ->withLogger($this->logger())
-            ,
-            (new PublishController($publisherAuthenticator))
-                ->withTransport($transport)
-                ->withStorage($storage)
-                ->withLogger($this->logger())
-            ,
-        ];
-
-        $requestHandler = new RequestHandler($controllers);
-
-        return new Hub($this->config, $this->loop, $requestHandler, $metricsHandler, $this->logger());
+        return new Hub(
+            $this->config,
+            $this->loop,
+            $transport,
+            $storage,
+            $metricsHandler,
+            $this->logger()
+        );
     }
 
     private function createTransport(LoopInterface $loop): TransportInterface

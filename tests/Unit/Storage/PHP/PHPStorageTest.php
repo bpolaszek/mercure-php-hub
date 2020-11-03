@@ -2,8 +2,9 @@
 
 namespace BenTools\MercurePHP\Tests\Unit\Storage\PHP;
 
+use BenTools\MercurePHP\Model\Subscription;
 use BenTools\MercurePHP\Storage\PHP\PHPStorage;
-use BenTools\MercurePHP\Message\Message;
+use BenTools\MercurePHP\Model\Message;
 use Ramsey\Uuid\Uuid;
 use React\EventLoop\Factory;
 
@@ -72,7 +73,7 @@ it('retrieves missed messages', function () {
     }
 
     $subscribedTopics = ['*'];
-    $bucket = await($storage->retrieveMessagesAfterId($storage::EARLIEST, $subscribedTopics), Factory::create());
+    $bucket = await($storage->retrieveMessagesAfterID($storage::EARLIEST, $subscribedTopics), Factory::create());
     $received = [];
     foreach ($bucket as $topic => $message) {
         $received[] = $message;
@@ -81,7 +82,7 @@ it('retrieves missed messages', function () {
     \assertEquals($received, $flatten($messages()));
 
     $subscribedTopics = ['*'];
-    $bucket = await($storage->retrieveMessagesAfterId($ids[0], $subscribedTopics), Factory::create());
+    $bucket = await($storage->retrieveMessagesAfterID($ids[0], $subscribedTopics), Factory::create());
     $received = [];
     foreach ($bucket as $topic => $message) {
         $received[] = $message;
@@ -90,7 +91,7 @@ it('retrieves missed messages', function () {
     \assertEquals($received, \array_slice($flatten($messages()), 1, 3));
 
     $subscribedTopics = ['/foo'];
-    $bucket = await($storage->retrieveMessagesAfterId($storage::EARLIEST, $subscribedTopics), Factory::create());
+    $bucket = await($storage->retrieveMessagesAfterID($storage::EARLIEST, $subscribedTopics), Factory::create());
     $received = [];
     foreach ($bucket as $topic => $message) {
         $received[] = $message;
@@ -99,11 +100,52 @@ it('retrieves missed messages', function () {
     \assertEquals($received, \array_slice($flatten($messages()), 0, 2));
 
     $subscribedTopics = ['/foo'];
-    $bucket = await($storage->retrieveMessagesAfterId($ids[0], $subscribedTopics), Factory::create());
+    $bucket = await($storage->retrieveMessagesAfterID($ids[0], $subscribedTopics), Factory::create());
     $received = [];
     foreach ($bucket as $topic => $message) {
         $received[] = $message;
     }
 
     \assertEquals($received, \array_slice($flatten($messages()), 1, 1));
+});
+
+it('stores and retrieves subscriptions', function () {
+
+    $loop = Factory::create();
+    $storage = new PHPStorage(1000);
+    $subscriptions = [
+        new Subscription('1', 'Bob', '/foo'),
+        new Subscription('2', 'Alice', '/foo'),
+        new Subscription('3', 'Bob', '/bar/{any}'),
+        new Subscription('4', 'Alice', '/bar/baz'),
+    ];
+
+    foreach ($subscriptions as $subscription) {
+        $storage->storeSubscriptions([$subscription]);
+    }
+
+    // All subscriptions
+    $result = \iterable_to_array(await($storage->findSubscriptions(), $loop));
+    \assertEquals($subscriptions, $result);
+
+    // By topic
+    $expected = [$subscriptions[2], $subscriptions[3]];
+    $result = \iterable_to_array(await($storage->findSubscriptions('/bar/{any}'), $loop));
+    \assertEquals($expected, $result);
+
+    // By subscriber
+    $expected = [$subscriptions[0], $subscriptions[2]];
+    $result = \iterable_to_array(await($storage->findSubscriptions(null, 'Bob'), $loop));
+    \assertEquals($expected, $result);
+
+    // By topic & subscriber
+    $expected = [$subscriptions[2]];
+    $result = \iterable_to_array(await($storage->findSubscriptions('/bar/{any}', 'Bob'), $loop));
+    \assertEquals($expected, $result);
+
+    // Remove one
+    $storage->removeSubscriptions([$subscriptions[3]]);
+    $expected = [$subscriptions[0], $subscriptions[1], $subscriptions[2]];
+    $result = \iterable_to_array(await($storage->findSubscriptions(), $loop));
+    \assertEquals($expected, $result);
 });

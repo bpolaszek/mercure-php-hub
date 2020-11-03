@@ -2,7 +2,7 @@
 
 namespace BenTools\MercurePHP\Security;
 
-use BenTools\MercurePHP\Message\Message;
+use BenTools\MercurePHP\Model\Message;
 use Lcobucci\JWT\Token;
 use Rize\UriTemplate;
 

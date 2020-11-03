@@ -4,6 +4,10 @@ namespace BenTools\MercurePHP;
 
 use Lcobucci\JWT\Signer;
 use Symfony\Component\Console\Input\InputInterface;
+use Psr\Http\Message\UriInterface;
+use Ramsey\Uuid\Uuid;
+
+const CLIENT_NAMESPACE = '530344d8-a802-11ea-bb37-0242ac130002';
 
 function nullify($input)
 {
@@ -45,4 +49,9 @@ function get_options_from_input(InputInterface $input): array
         $input->getOptions(),
         fn($value) => null !== nullify($value) && false !== $value
     );
+}
+
+function get_client_id(string $remoteHost, int $remotePort): string
+{
+    return (string) Uuid::uuid5(CLIENT_NAMESPACE, \sprintf('%s:%d', $remoteHost, $remotePort));
 }

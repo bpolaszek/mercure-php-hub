@@ -145,7 +145,14 @@ final class ServeCommand extends Command
                 null,
                 InputOption::VALUE_NONE,
                 'Allows subscribers with no valid JWT to connect.',
-            );
+            )
+            ->addOption(
+                'subscriptions',
+                null,
+                InputOption::VALUE_NONE,
+                'Expose the Subscription API.',
+            )
+        ;
     }
 
     private function displayConfiguration(array $config, SymfonyStyle $output): void
