@@ -1,58 +1,114 @@
 name: CI Workflow
 
 on:
-  pull_request:
-    branches: [ master ]
+    pull_request:
+        branches: [ master ]
 
 jobs:
-  build:
 
-    runs-on: ubuntu-20.04
-    continue-on-error: ${{ matrix.experimental }}
-    strategy:
-      max-parallel: 10
-      matrix:
-        php: ['7.4']
-        experimental: [false]
-        include:
-          -   php: '8.0'
-              experimental: true
+    code-style:
 
-    steps:
-    - uses: actions/checkout@v2
+        runs-on: ubuntu-20.04
+        continue-on-error: ${{ matrix.experimental }}
+        strategy:
+            max-parallel: 10
+            matrix:
+                php: [ '7.4' ]
+                experimental: [ false ]
+                include:
+                    -   php: '8.0'
+                        experimental: true
 
-    - name: Setup PHP
-      uses: shivammathur/setup-php@v2
-      with:
-        php-version: ${{ matrix.php }}
-        extensions: mbstring, pcntl
-        coverage: pcov
+        steps:
+            -   uses: actions/checkout@v2
 
-    - name: Setup a Redis server
-      run: sudo apt install -y redis
+            -   name: Setup PHP
+                uses: shivammathur/setup-php@v2
+                with:
+                    php-version: ${{ matrix.php }}
+                    extensions: mbstring, pcntl
+                    coverage: pcov
 
-    - name: Validate composer.json and composer.lock
-      run: composer validate
+            -   name: Validate composer.json and composer.lock
+                run: composer validate
 
-    - name: Install dependencies
-      if: steps.composer-cache.outputs.cache-hit != 'true'
-      run: composer install --prefer-dist --no-progress
+            -   name: Install dependencies
+                run: composer install --prefer-dist --no-progress
 
-    - name: Check code style
-      run: composer phpcs:check
+            -   name: Check code style
+                run: composer phpcs:check
 
-    - name: Track avoidable bugs
-      run: composer phpstan:analyze
+            -   name: Track avoidable bugs
+                run: composer phpstan:analyze
 
-    - name: Run integration tests with Redis transport
-      run: composer tests:integration:run
-      env:
-        TRANSPORT_URL: redis://localhost
+    integration-tests:
 
-    - name: Run tests
-      run: composer tests:run:with-coverage
+        runs-on: ubuntu-20.04
+        continue-on-error: ${{ matrix.experimental }}
+        strategy:
+            max-parallel: 10
+            matrix:
+                php: [ '7.4' ]
+                transport: [ 'php://localhost?size=1000', 'redis://localhost' ]
+                experimental: [ false ]
+                include:
+                    -   php: '8.0'
+                        experimental: true
 
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v1
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
+        steps:
+            -   uses: actions/checkout@v2
+
+            -   name: Setup PHP
+                uses: shivammathur/setup-php@v2
+                with:
+                    php-version: ${{ matrix.php }}
+                    extensions: mbstring, pcntl
+                    coverage: pcov
+
+            -   name: Setup a Redis server
+                run: sudo apt install -y redis
+
+            -   name: Install dependencies
+                run: composer install --prefer-dist --no-progress
+
+            -   name: Run integration tests
+                run: php vendor/bin/pest --testsuite=Integration
+                env:
+                    TRANSPORT_URL: ${{ matrix.transport }}
+
+    unit-tests:
+
+        runs-on: ubuntu-20.04
+        continue-on-error: ${{ matrix.experimental }}
+        strategy:
+            max-parallel: 10
+            matrix:
+                php: [ '7.4' ]
+                experimental: [ false ]
+                include:
+                    -   php: '8.0'
+                        experimental: true
+
+        steps:
+            -   uses: actions/checkout@v2
+
+            -   name: Setup PHP
+                uses: shivammathur/setup-php@v2
+                with:
+                    php-version: ${{ matrix.php }}
+                    extensions: mbstring, pcntl
+                    coverage: pcov
+
+            -   name: Setup a Redis server
+                run: sudo apt install -y redis
+
+            -   name: Install dependencies
+                run: composer install --prefer-dist --no-progress
+
+            -   name: Run unit tests
+                run: composer tests:unit:run:with-coverage
+
+            -   name: Upload coverage to Codecov
+                uses: codecov/codecov-action@v1
+                with:
+                    token: ${{ secrets.CODECOV_TOKEN }}

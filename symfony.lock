@@ -5,6 +5,9 @@
     "psr/cache": {
         "version": "1.0.1"
     },
+    "react/child-process": {
+        "version": "v0.6.1"
+    },
     "symfony/cache": {
         "version": "v5.1.5"
     },

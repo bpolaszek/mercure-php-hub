@@ -13,7 +13,6 @@ use function React\Promise\all;
 
 it('transports messages', function () {
 
-    dump($_SERVER['REDIS_DSN']);
     $loop = EventLoop\Factory::create();
     $subscriberClient = await((new Redis\Factory($loop))->createClient($_SERVER['REDIS_DSN']), $loop);
     $publisherClient = await((new Redis\Factory($loop))->createClient($_SERVER['REDIS_DSN']), $loop);
@@ -29,7 +28,6 @@ it('transports messages', function () {
     ];
 
     $promises = all($subscriptions)->then(function () use ($transport) {
-        usleep(150000);
         $publications = [
             $transport->publish('/foo', new Message('bar')),
             $transport->publish('/foo/bar', new Message('baz')),
