@@ -29,7 +29,7 @@ jobs:
         coverage: pcov
 
     - name: Setup a Redis server
-      uses: supercharge/redis-github-action@1.1.0
+      run: sudo apt install -y redis
 
     - name: Validate composer.json and composer.lock
       run: composer validate
