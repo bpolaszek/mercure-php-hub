@@ -60,14 +60,12 @@ final class RedisStorage implements StorageInterface
     {
         $nextId = $this->sync->get('next:' . $id);
 
-        /** @phpstan-ignore-next-line */
         if (null === $nextId) {
             return [];
         }
 
         $payload = $this->sync->get('data:' . $nextId);
 
-        /** @phpstan-ignore-next-line */
         if (null === $payload) {
             return [];
         }
