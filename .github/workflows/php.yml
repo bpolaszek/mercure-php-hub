@@ -1,8 +1,5 @@
 name: CI Workflow
 
-env:
-  CODECOV_TOKEN: "bfaef100-626e-4f5a-827d-8e6d629f8388"
-
 on:
   pull_request:
     branches: [ master ]
@@ -29,6 +26,7 @@ jobs:
       with:
         php-version: ${{ matrix.php }}
         extensions: mbstring, pcntl
+        coverage: pcov
 
     - name: Setup a Redis server
       uses: supercharge/redis-github-action@1.1.0
@@ -44,7 +42,9 @@ jobs:
       run: composer tests:unit:run:with-coverage
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v1.0.7
+      uses: codecov/codecov-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
 
     - name: Run integration tests with default transport (PHP)
       run: composer tests:integration:run
