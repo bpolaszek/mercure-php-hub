@@ -13,6 +13,9 @@ use Symfony\Component\Console\Tester\CommandTester;
 
 use function BenTools\CartesianProduct\cartesian_product;
 use function BenTools\MercurePHP\without_nullish_values;
+use function PHPUnit\Framework\assertEquals;
+use function PHPUnit\Framework\assertSame;
+use function PHPUnit\Framework\assertTrue;
 
 $combinations = cartesian_product([
     'publish' => [
@@ -73,25 +76,25 @@ it('returns the desired JWT', function (
             ['interactive' => false]
         );
         $statusCode = $tester->getStatusCode();
-        \assertEquals(Command::SUCCESS, $statusCode);
+        assertSame(Command::SUCCESS, $statusCode);
         $output = $tester->getDisplay();
         $token = (new Parser())->parse($output);
 
-        \assertTrue($token->hasClaim('mercure'));
+        assertTrue($token->hasClaim('mercure'));
 
     $claim = (array) $token->getClaim('mercure');
-    \assertSame(null !== $publish, \array_key_exists('publish', $claim));
-    \assertSame(null !== $publishExclude, \array_key_exists('publish_exclude', $claim));
-    \assertSame(null !== $subscribe, \array_key_exists('subscribe', $claim));
-    \assertSame(null !== $subscribeExclude, \array_key_exists('subscribe_exclude', $claim));
+    assertSame(null !== $publish, \array_key_exists('publish', $claim));
+    assertSame(null !== $publishExclude, \array_key_exists('publish_exclude', $claim));
+    assertSame(null !== $subscribe, \array_key_exists('subscribe', $claim));
+    assertSame(null !== $subscribeExclude, \array_key_exists('subscribe_exclude', $claim));
 
-    \assertSame($publish, $claim['publish'] ?? null);
-    \assertSame($publishExclude, $claim['publish_exclude'] ?? null);
-    \assertSame($subscribe, $claim['subscribe'] ?? null);
-    \assertSame($subscribeExclude, $claim['subscribe_exclude'] ?? null);
+    assertSame($publish, $claim['publish'] ?? null);
+    assertSame($publishExclude, $claim['publish_exclude'] ?? null);
+    assertSame($subscribe, $claim['subscribe'] ?? null);
+    assertSame($subscribeExclude, $claim['subscribe_exclude'] ?? null);
 
     $later = (new \DateTimeImmutable())->modify(\sprintf('+ %d seconds', (int) $ttl + 1));
-    \assertEquals(null !== $ttl, $token->isExpired($later));
+    assertSame(null !== $ttl, $token->isExpired($later));
 })->with($combinations);
 
 $publicKey = <<<EOF
@@ -221,7 +224,7 @@ it(
             ['interactive' => false]
         );
         $statusCode = $tester->getStatusCode();
-        \assertEquals(Command::SUCCESS, $statusCode);
+        assertEquals(Command::SUCCESS, $statusCode);
 
         $output = $tester->getDisplay();
 
@@ -232,9 +235,9 @@ it(
             $commandArguments['--subscriber-jwt-algorithm'] ?? null,
         ];
         if (\in_array('RS512', $algorithms, true)) {
-            \assertTrue($token->verify(new Sha512(), new Key($publicKey)));
+            assertTrue($token->verify(new Sha512(), new Key($publicKey)));
         } else {
-            \assertTrue($token->verify(new Sha256(), new Key('ASecretKey')));
+            assertTrue($token->verify(new Sha256(), new Key('ASecretKey')));
         }
     }
 )->with($combinations);

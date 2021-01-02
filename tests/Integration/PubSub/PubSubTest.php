@@ -16,6 +16,9 @@ use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Component\Process\Process;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
+use function PHPUnit\Framework\assertCount;
+use function PHPUnit\Framework\assertEquals;
+
 function createJWT(array $claims, string $key): Token
 {
     $builder = new Builder();
@@ -55,14 +58,12 @@ $url = null;
 $process = null;
 
 beforeAll(function () use (&$url, &$process) {
-    $url = new Uri(sprintf("http://%s", \getenv('ADDR')));
-    $transport = \getenv('TRANSPORT_URL');
+    $url = new Uri(sprintf("http://%s", $_SERVER['ADDR']));
+    $transport = $_SERVER['TRANSPORT_URL'];
     if (false === $transport) {
         throw new \RuntimeException('Cannot run test, missing TRANSPORT_URL env var.');
     }
-    $process = new Process(['bin/mercure'], \dirname(__DIR__, 3), [
-        'TRANSPORT_URL' => $transport,
-    ]);
+    $process = new Process(['bin/mercure'], \dirname(__DIR__, 3));
     $process->setTimeout(60);
     $process->setIdleTimeout(60);
     $process->start();
@@ -76,12 +77,12 @@ afterAll(function () use (&$process) {
 
 it('returns a 200 status code on health check', function () use (&$url) {
     $response = HttpClient::create()->request('GET', $url->withPath('/.well-known/mercure/health'));
-    \assertEquals(200, $response->getStatusCode());
+    assertEquals(200, $response->getStatusCode());
 });
 
 it('returns 404 on unknown urls', function () use (&$url) {
     $response = HttpClient::create()->request('GET', $url->withPath('/foo'));
-    \assertEquals(404, $response->getStatusCode());
+    assertEquals(404, $response->getStatusCode());
 });
 
 it('receives updates in real time', function () use (&$url) {
@@ -90,7 +91,7 @@ it('receives updates in real time', function () use (&$url) {
         $uuids[] = (string) Uuid::uuid4();
     }
 
-    $token = createJWT(['mercure' => ['publish' => ['*']]], \getenv('JWT_KEY'));
+    $token = createJWT(['mercure' => ['publish' => ['*']]], $_SERVER['JWT_KEY']);
     $client = HttpClient::create();
     $subscribeUrl = $url->withPath('/.well-known/mercure')->withQuery('topic=/foo&topic=/foobar/{id}');
     $publishUrl = $url->withPath('/.well-known/mercure');
@@ -140,11 +141,11 @@ it('receives updates in real time', function () use (&$url) {
     $loop->run();
 
     foreach ($expectedPublishResponse as $id => $expectedResponse) {
-        \assertEquals($expectedResponse, $publishResponses[$id]);
+        assertEquals($expectedResponse, $publishResponses[$id]);
     }
 
-    \assertCount(\count($receivedEvents), $expectedReceivedEvents);
+    assertCount(\count($receivedEvents), $expectedReceivedEvents);
     foreach ($expectedReceivedEvents as $id => $expectedEvent) {
-        \assertEquals($expectedEvent, $receivedEvents[$id]);
+        assertEquals($expectedEvent, $receivedEvents[$id]);
     }
 });

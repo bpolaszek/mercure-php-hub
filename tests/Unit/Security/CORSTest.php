@@ -9,6 +9,7 @@ use RingCentral\Psr7\Response;
 use RingCentral\Psr7\ServerRequest;
 
 use function BenTools\CartesianProduct\cartesian_product;
+use function PHPUnit\Framework\assertEquals;
 
 function createRequest(string $method, string $headerName, string $origin = null): ServerRequestInterface
 {
@@ -100,7 +101,7 @@ it(
         $request = createRequest($method, $headerName, $origin);
         $cors = new CORS($config->asArray());
         $response = $cors->decorateResponse($request, createResponse());
-        \assertEquals($expected, $response->getHeaderLine('Access-Control-Allow-Origin'));
-        \assertEquals(200, $response->getStatusCode());
+        assertEquals($expected, $response->getHeaderLine('Access-Control-Allow-Origin'));
+        assertEquals(200, $response->getStatusCode());
     }
 )->with($combinations);

@@ -19,6 +19,11 @@ use Psr\Http\Message\ServerRequestInterface;
 use Ramsey\Uuid\Uuid;
 use RingCentral\Psr7\ServerRequest;
 
+use function PHPUnit\Framework\assertEquals;
+use function PHPUnit\Framework\assertFalse;
+use function PHPUnit\Framework\assertInstanceOf;
+use function PHPUnit\Framework\assertTrue;
+
 function createController(Configuration $configuration, ?Authenticator $authenticator = null)
 {
     $config = $configuration->asArray();
@@ -58,13 +63,13 @@ function createPublishRequest(?array $postData = []): ServerRequestInterface
 it('will respond to the Mercure publish url', function () {
     $handle = createController(new Configuration(['jwt_key' => 'foo']));
     $request = new ServerRequest('POST', '/.well-known/mercure');
-    \assertTrue($handle->matchRequest($request));
+    assertTrue($handle->matchRequest($request));
 });
 
 it('will not respond when requet method is not post', function () {
     $handle = createController(new Configuration(['jwt_key' => 'foo']));
     $request = new ServerRequest('GET', '/.well-known/mercure');
-    \assertFalse($handle->matchRequest($request));
+    assertFalse($handle->matchRequest($request));
 });
 
 # Authentication / Authorization
@@ -182,9 +187,9 @@ it('publishes an update to the hub', function () {
     $handle = createController(new Configuration(['jwt_key' => 'foo']));
     $request = authenticate(createPublishRequest(['topic' => '/foo', 'data' => 'bar']), $token);
     $response = $handle($request);
-    \assertInstanceOf(ResponseInterface::class, $response);
-    \assertEquals(201, $response->getStatusCode());
-    \assertTrue(Uuid::isValid((string) $response->getBody()));
+    assertInstanceOf(ResponseInterface::class, $response);
+    assertEquals(201, $response->getStatusCode());
+    assertTrue(Uuid::isValid((string) $response->getBody()));
 });
 
 it('accepts an UUID from client', function () {
@@ -194,10 +199,10 @@ it('accepts an UUID from client', function () {
     $request = authenticate(createPublishRequest(['topic' => '/foo', 'data' => 'bar', 'id' => $id]), $token);
     $response = $handle($request);
     $content = (string) $response->getBody();
-    \assertInstanceOf(ResponseInterface::class, $response);
-    \assertEquals(201, $response->getStatusCode());
-    \assertTrue(Uuid::isValid($content));
-    \assertEquals($id, $content);
+    assertInstanceOf(ResponseInterface::class, $response);
+    assertEquals(201, $response->getStatusCode());
+    assertTrue(Uuid::isValid($content));
+    assertEquals($id, $content);
 });
 
 it('yells if client sends an invalid UUID', function () {

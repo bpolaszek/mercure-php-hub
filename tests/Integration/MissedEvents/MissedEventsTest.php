@@ -16,6 +16,9 @@ use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Component\Process\Process;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
+use function PHPUnit\Framework\assertCount;
+use function PHPUnit\Framework\assertEquals;
+
 function createJWT(array $claims, string $key): Token
 {
     $builder = new Builder();
@@ -55,14 +58,12 @@ $url = null;
 $process = null;
 
 beforeAll(function () use (&$url, &$process) {
-    $url = new Uri(sprintf("http://%s", \getenv('ADDR')));
-    $transport = \getenv('TRANSPORT_URL');
+    $url = new Uri(sprintf("http://%s", $_SERVER['ADDR']));
+    $transport = $_SERVER['TRANSPORT_URL'];
     if (false === $transport) {
         throw new \RuntimeException('Cannot run test, missing TRANSPORT_URL env var.');
     }
-    $process = new Process(['bin/mercure'], \dirname(__DIR__, 3), [
-        'TRANSPORT_URL' => $transport,
-    ]);
+    $process = new Process(['bin/mercure'], \dirname(__DIR__, 3));
     $process->setTimeout(60);
     $process->setIdleTimeout(60);
     $process->start();
@@ -80,7 +81,7 @@ it('successfully receives missed events', function () use (&$url) {
         $uuids[] = (string) Uuid::uuid4();
     }
 
-    $token = createJWT(['mercure' => ['publish' => ['*']]], \getenv('JWT_KEY'));
+    $token = createJWT(['mercure' => ['publish' => ['*']]], $_SERVER['JWT_KEY']);
     $client = HttpClient::create();
     $subscribeUrl = $url->withPath('/.well-known/mercure')
         ->withQuery('topic=/foo&topic=/foobar/{id}&Last-Event-ID=' . $uuids[0]);
@@ -116,8 +117,8 @@ it('successfully receives missed events', function () use (&$url) {
     $loop->addTimer(4, fn() => $eventSource->close());
     $loop->run();
 
-    \assertCount(\count($receivedEvents), $expectedReceivedEvents);
+    assertCount(\count($receivedEvents), $expectedReceivedEvents);
     foreach ($expectedReceivedEvents as $id => $expectedEvent) {
-        \assertEquals($expectedEvent, $receivedEvents[$id]);
+        assertEquals($expectedEvent, $receivedEvents[$id]);
     }
 });

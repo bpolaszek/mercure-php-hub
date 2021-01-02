@@ -11,6 +11,9 @@ use Lcobucci\JWT\Signer\Key;
 use Lcobucci\JWT\Token;
 
 use function BenTools\CartesianProduct\cartesian_product as combinations;
+use function PHPUnit\Framework\assertEquals;
+use function PHPUnit\Framework\assertFalse;
+use function PHPUnit\Framework\assertTrue;
 
 function createMercureJWT(string $key, array $mercureClaim): Token
 {
@@ -22,10 +25,10 @@ function createMercureJWT(string $key, array $mercureClaim): Token
 
 test('the * selector opens all the gates', function () {
     $token = createMercureJWT('foo', ['subscribe' => ['*']]);
-    \assertTrue(TopicMatcher::matchesTopicSelectors('/foo', ['*']));
-    \assertTrue(TopicMatcher::matchesTopicSelectors('/foo/{bar}', ['*']));
-    \assertTrue(TopicMatcher::canSubscribeToTopic('/foo', $token, false));
-    \assertTrue(TopicMatcher::canReceiveUpdate('/foo', new Message('foo'), ['/foo'], $token, false));
+    assertTrue(TopicMatcher::matchesTopicSelectors('/foo', ['*']));
+    assertTrue(TopicMatcher::matchesTopicSelectors('/foo/{bar}', ['*']));
+    assertTrue(TopicMatcher::canSubscribeToTopic('/foo', $token, false));
+    assertTrue(TopicMatcher::canReceiveUpdate('/foo', new Message('foo'), ['/foo'], $token, false));
 });
 
 test('some topics can be excluded', function () {
@@ -34,8 +37,8 @@ test('some topics can be excluded', function () {
         'subscribe_exclude' => ['/bar'],
     ]);
 
-    \assertTrue(TopicMatcher::canSubscribeToTopic('/foo', $token, false));
-    \assertFalse(TopicMatcher::canSubscribeToTopic('/bar', $token, false));
+    assertTrue(TopicMatcher::canSubscribeToTopic('/foo', $token, false));
+    assertFalse(TopicMatcher::canSubscribeToTopic('/bar', $token, false));
 });
 
 /**
@@ -80,8 +83,8 @@ test(
     function (array $subscribedTopics, bool $allowAnonymous, ?Token $token, bool $private) use (&$counter) {
         $message = new Message('foo', 'bar', $private);
 
-        \assertTrue(TopicMatcher::canSubscribeToTopic($subscribedTopics[0], $token, $allowAnonymous));
-        \assertTrue(TopicMatcher::canSubscribeToTopic($subscribedTopics[1], $token, $allowAnonymous));
+        assertTrue(TopicMatcher::canSubscribeToTopic($subscribedTopics[0], $token, $allowAnonymous));
+        assertTrue(TopicMatcher::canSubscribeToTopic($subscribedTopics[1], $token, $allowAnonymous));
         $privateRecipients = [
             '/alice' => false, // No token, no updates
             '/bob' => false, // No token, no updates
@@ -98,7 +101,7 @@ test(
         ];
         $recipients = $message->isPrivate() ? $privateRecipients : $publicRecipients;
         foreach ($recipients as $topic => $expected) {
-            \assertEquals(
+            assertEquals(
                 $expected,
                 TopicMatcher::canReceiveUpdate($topic, $message, $subscribedTopics, $token, $allowAnonymous)
             );
@@ -118,8 +121,8 @@ test(
     function (array $subscribedTopics, bool $allowAnonymous, ?Token $token, bool $private) use (&$counter) {
         $message = new Message('foo', 'bar', $private);
 
-        \assertTrue(TopicMatcher::canSubscribeToTopic($subscribedTopics[0], $token, $allowAnonymous));
-        \assertTrue(TopicMatcher::canSubscribeToTopic($subscribedTopics[1], $token, $allowAnonymous));
+        assertTrue(TopicMatcher::canSubscribeToTopic($subscribedTopics[0], $token, $allowAnonymous));
+        assertTrue(TopicMatcher::canSubscribeToTopic($subscribedTopics[1], $token, $allowAnonymous));
         $privateRecipients = [
             '/alice' => true, // Token allows this topic
             '/bob' => false, // Token doesn't allow this topic
@@ -136,7 +139,7 @@ test(
         ];
         $recipients = $message->isPrivate() ? $privateRecipients : $publicRecipients;
         foreach ($recipients as $topic => $expected) {
-            \assertEquals(
+            assertEquals(
                 $expected,
                 TopicMatcher::canReceiveUpdate($topic, $message, $subscribedTopics, $token, $allowAnonymous)
             );
@@ -155,8 +158,8 @@ test(
     function (array $subscribedTopics, bool $allowAnonymous, ?Token $token, bool $private) use (&$counter) {
         $message = new Message('foo', 'bar', $private);
 
-        \assertFalse(TopicMatcher::canSubscribeToTopic($subscribedTopics[0], $token, $allowAnonymous));
-        \assertFalse(TopicMatcher::canSubscribeToTopic($subscribedTopics[1], $token, $allowAnonymous));
+        assertFalse(TopicMatcher::canSubscribeToTopic($subscribedTopics[0], $token, $allowAnonymous));
+        assertFalse(TopicMatcher::canSubscribeToTopic($subscribedTopics[1], $token, $allowAnonymous));
         $privateRecipients = [
             '/alice' => false, // No token, no updates
             '/bob' => false, // No token, no updates
@@ -173,7 +176,7 @@ test(
         ];
         $recipients = $message->isPrivate() ? $privateRecipients : $publicRecipients;
         foreach ($recipients as $topic => $expected) {
-            \assertEquals(
+            assertEquals(
                 $expected,
                 TopicMatcher::canReceiveUpdate($topic, $message, $subscribedTopics, $token, $allowAnonymous)
             );
@@ -192,8 +195,8 @@ test(
     function (array $subscribedTopics, bool $allowAnonymous, ?Token $token, bool $private) use (&$counter) {
         $message = new Message('foo', 'bar', $private);
 
-        \assertTrue(TopicMatcher::canSubscribeToTopic($subscribedTopics[0], $token, $allowAnonymous));
-        \assertFalse(TopicMatcher::canSubscribeToTopic($subscribedTopics[1], $token, $allowAnonymous));
+        assertTrue(TopicMatcher::canSubscribeToTopic($subscribedTopics[0], $token, $allowAnonymous));
+        assertFalse(TopicMatcher::canSubscribeToTopic($subscribedTopics[1], $token, $allowAnonymous));
 
         $privateRecipients = [
             '/alice' => true, // Subscribed, authorized
@@ -211,7 +214,7 @@ test(
         ];
         $recipients = $message->isPrivate() ? $privateRecipients : $publicRecipients;
         foreach ($recipients as $topic => $expected) {
-            \assertEquals(
+            assertEquals(
                 $expected,
                 TopicMatcher::canReceiveUpdate($topic, $message, $subscribedTopics, $token, $allowAnonymous)
             );
@@ -226,5 +229,5 @@ test(
     );
 
 test('all combinations have been tested', function () use ($combinations, &$counter) {
-    \assertEquals(\count($combinations), $counter);
+    assertEquals(\count($combinations), $counter);
 });

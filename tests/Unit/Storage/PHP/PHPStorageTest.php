@@ -8,6 +8,7 @@ use Ramsey\Uuid\Uuid;
 use React\EventLoop\Factory;
 
 use function Clue\React\Block\await;
+use function PHPUnit\Framework\assertEquals;
 
 it('won\'t store more messages than the given limit', function (int $size, array $messages, array $expected) {
     $storage = new PHPStorage($size);
@@ -21,7 +22,7 @@ it('won\'t store more messages than the given limit', function (int $size, array
     $reflProp->setAccessible(true);
 
     $storedMessages = $reflProp->getValue($storage);
-    \assertEquals($expected, $storedMessages);
+    assertEquals($expected, $storedMessages);
 })->with(function () {
     $messages = [
         '/foo' => new Message((string) Uuid::uuid4()),
@@ -78,7 +79,7 @@ it('retrieves missed messages', function () {
         $received[] = $message;
     }
 
-    \assertEquals($received, $flatten($messages()));
+    assertEquals($received, $flatten($messages()));
 
     $subscribedTopics = ['*'];
     $bucket = await($storage->retrieveMessagesAfterId($ids[0], $subscribedTopics), Factory::create());
@@ -87,7 +88,7 @@ it('retrieves missed messages', function () {
         $received[] = $message;
     }
 
-    \assertEquals($received, \array_slice($flatten($messages()), 1, 3));
+    assertEquals($received, \array_slice($flatten($messages()), 1, 3));
 
     $subscribedTopics = ['/foo'];
     $bucket = await($storage->retrieveMessagesAfterId($storage::EARLIEST, $subscribedTopics), Factory::create());
@@ -96,7 +97,7 @@ it('retrieves missed messages', function () {
         $received[] = $message;
     }
 
-    \assertEquals($received, \array_slice($flatten($messages()), 0, 2));
+    assertEquals($received, \array_slice($flatten($messages()), 0, 2));
 
     $subscribedTopics = ['/foo'];
     $bucket = await($storage->retrieveMessagesAfterId($ids[0], $subscribedTopics), Factory::create());
@@ -105,5 +106,5 @@ it('retrieves missed messages', function () {
         $received[] = $message;
     }
 
-    \assertEquals($received, \array_slice($flatten($messages()), 1, 1));
+    assertEquals($received, \array_slice($flatten($messages()), 1, 1));
 });

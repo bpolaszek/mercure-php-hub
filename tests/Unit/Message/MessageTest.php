@@ -5,6 +5,8 @@ namespace BenTools\MercurePHP\Tests\Unit\Message;
 use BenTools\MercurePHP\Message\Message;
 
 use function BenTools\CartesianProduct\cartesian_product;
+use function PHPUnit\Framework\assertInstanceOf;
+use function PHPUnit\Framework\assertSame;
 
 $combinations = cartesian_product([
     'id' => [
@@ -36,14 +38,14 @@ EOF
 
 it('instanciates a message', function (string $id, ?string $data, bool $private, ?string $event, ?int $retry) {
     $message = new Message($id, $data, $private, $event, $retry);
-    \assertSame($id, $message->getId());
-    \assertSame($data, $message->getData());
-    \assertSame($private, $message->isPrivate());
+    assertSame($id, $message->getId());
+    assertSame($data, $message->getData());
+    assertSame($private, $message->isPrivate());
 })->with($combinations);
 
 it('produces the expected JSON', function (string $id, ?string $data, bool $private, ?string $event, ?int $retry) {
     $message = new Message($id, $data, $private, $event, $retry);
-    \assertInstanceOf(\JsonSerializable::class, $message);
+    assertInstanceOf(\JsonSerializable::class, $message);
 
     $expected = [
         'id' => $id,
@@ -63,12 +65,12 @@ it('produces the expected JSON', function (string $id, ?string $data, bool $priv
         $expected['retry'] = $retry;
     }
 
-    \assertSame($expected, $message->jsonSerialize());
+    assertSame($expected, $message->jsonSerialize());
 })->with($combinations);
 
 it('produces the expected string', function (string $id, ?string $data, bool $private, ?string $event, ?int $retry) {
     $message = new Message($id, $data, $private, $event, $retry);
-    \assertInstanceOf(\JsonSerializable::class, $message);
+    assertInstanceOf(\JsonSerializable::class, $message);
 
     $expected = sprintf('id:%s%s', $id, \PHP_EOL);
     if (null !== $event) {
@@ -98,5 +100,5 @@ EOF;
     }
     $expected .= \PHP_EOL;
 
-    \assertSame($expected, (string) $message);
+    assertSame($expected, (string) $message);
 })->with($combinations);

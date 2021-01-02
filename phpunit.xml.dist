@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:noNamespaceSchemaLocation="./vendor/phpunit/phpunit/phpunit.xsd"
-         bootstrap="vendor/autoload.php"
+         bootstrap="tests/bootstrap.php"
          colors="true"
 >
+    <php>
+        <env name="APP_ENV" value="test" force="true" />
+    </php>
     <testsuites>
         <testsuite name="Unit">
             <directory suffix="Test.php">./tests/Unit</directory>
@@ -17,16 +20,4 @@
             <directory suffix=".php">./src</directory>
         </whitelist>
     </filter>
-    <php>
-        <env name="TRANSPORT_URL" value="php://localhost?size=1000" />
-        <env name="REDIS_DSN" value="redis://localhost" />
-        <env name="JWT_KEY" value="AVERYSECRETKEY" />
-        <env name="ADDR" value="127.0.0.1:3000" />
-        <env name="ALLOW_ANONYMOUS" value="1" />
-
-        <!-- ###+ symfony/framework-bundle ### -->
-        <env name="APP_ENV" value="dev"/>
-        <env name="APP_SECRET" value="914c3fe54e926cec2ba7c0955c046dd5"/>
-        <!-- ###- symfony/framework-bundle ### -->
-    </php>
 </phpunit>

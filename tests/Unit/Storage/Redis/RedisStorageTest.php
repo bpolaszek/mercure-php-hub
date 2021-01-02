@@ -11,12 +11,13 @@ use React\EventLoop;
 use React\EventLoop\Factory;
 
 use function Clue\React\Block\await;
+use function PHPUnit\Framework\assertEquals;
 
 it('retrieves missed messages', function () {
 
     $loop = EventLoop\Factory::create();
-    $asyncClient = await((new Redis\Factory($loop))->createClient(\getenv('REDIS_DSN')), $loop);
-    $syncClient = new Client(\getenv('REDIS_DSN'));
+    $asyncClient = await((new Redis\Factory($loop))->createClient($_SERVER['REDIS_DSN']), $loop);
+    $syncClient = new Client($_SERVER['REDIS_DSN']);
     $storage = new RedisStorage($asyncClient, $syncClient);
 
     $ids = [
@@ -53,7 +54,7 @@ it('retrieves missed messages', function () {
         $received[] = $message;
     }
 
-    \assertEquals($received, \array_slice($flatten($messages()), 1, 3));
+    assertEquals($received, \array_slice($flatten($messages()), 1, 3));
 
     $subscribedTopics = ['/foo'];
     $bucket = await($storage->retrieveMessagesAfterId($ids[0], $subscribedTopics), Factory::create());
@@ -62,5 +63,5 @@ it('retrieves missed messages', function () {
         $received[] = $message;
     }
 
-    \assertEquals($received, \array_slice($flatten($messages()), 1, 1));
+    assertEquals($received, \array_slice($flatten($messages()), 1, 1));
 });
