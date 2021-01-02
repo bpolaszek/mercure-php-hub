@@ -51,7 +51,6 @@
         "bentools/shh": "^1.0",
         "clue/reactphp-eventsource": "dev-master#e356b73fbf54a491c37d6b571ee5245206cbdc27",
         "friendsofphp/php-cs-fixer": "^2.16",
-        "nunomaduro/collision": "^5.0@beta",
         "phpstan/phpstan": "^0.12.25",
         "phpunit/phpunit": "^9.0",
         "ringcentral/psr7": "^1.3",
