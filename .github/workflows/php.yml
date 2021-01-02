@@ -15,7 +15,7 @@ jobs:
         php: ['7.4']
         experimental: [false]
         include:
-          -   php: 8.0
+          -   php: '8.0'
               experimental: true
 
     steps:
@@ -36,28 +36,23 @@ jobs:
 
     - name: Install dependencies
       if: steps.composer-cache.outputs.cache-hit != 'true'
-      run: composer install --prefer-dist --no-progress --no-suggest
-
-    - name: Run unit tests
-      run: composer tests:unit:run:with-coverage
-
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v1
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-
-    - name: Run integration tests with default transport (PHP)
-      run: composer tests:integration:run
-      env:
-        TRANSPORT_URL: php://localhost?size=1000
-
-    - name: Run integration tests with Redis transport
-      run: composer tests:integration:run
-      env:
-        TRANSPORT_URL: redis://localhost
+      run: composer install --prefer-dist --no-progress
 
     - name: Check code style
       run: composer phpcs:check
 
     - name: Track avoidable bugs
       run: composer phpstan:analyze
+
+    - name: Run integration tests with Redis transport
+      run: composer tests:integration:run
+      env:
+        TRANSPORT_URL: redis://localhost
+
+    - name: Run tests
+      run: composer tests:run:with-coverage
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}

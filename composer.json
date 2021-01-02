@@ -64,8 +64,8 @@
     },
     "scripts": {
         "tests:run": "vendor/bin/pest",
+        "tests:run:with-coverage": "vendor/bin/pest --coverage-clover=coverage.xml --whitelist=src",
         "tests:unit:run": "vendor/bin/pest --testsuite=Unit",
-        "tests:unit:run:with-coverage": "vendor/bin/pest --testsuite=Unit --coverage-clover=coverage.xml --whitelist=src",
         "tests:integration:run": "vendor/bin/pest --testsuite=Integration",
         "phpcs:check": "vendor/bin/phpcs --standard=PSR12 -n bin src tests --ignore=tests/bootstrap.php",
         "phpcs:fix": "vendor/bin/phpcbf --standard=PSR12 -n bin src tests",

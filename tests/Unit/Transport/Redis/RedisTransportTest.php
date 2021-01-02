@@ -13,6 +13,7 @@ use function React\Promise\all;
 
 it('transports messages', function () {
 
+    dump($_SERVER['REDIS_DSN']);
     $loop = EventLoop\Factory::create();
     $subscriberClient = await((new Redis\Factory($loop))->createClient($_SERVER['REDIS_DSN']), $loop);
     $publisherClient = await((new Redis\Factory($loop))->createClient($_SERVER['REDIS_DSN']), $loop);
