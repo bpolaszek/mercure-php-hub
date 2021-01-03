@@ -4,6 +4,7 @@ namespace BenTools\MercurePHP\Tests\Unit\Storage\Redis;
 
 use BenTools\MercurePHP\Storage\Redis\RedisStorage;
 use BenTools\MercurePHP\Storage\Redis\RedisStorageFactory;
+use Psr\Log\NullLogger;
 use React\EventLoop\Factory;
 
 use function Clue\React\Block\await;
@@ -13,7 +14,7 @@ use function PHPUnit\Framework\assertTrue;
 
 it('supports redis scheme', function () {
     $loop = Factory::create();
-    $factory = new RedisStorageFactory($loop);
+    $factory = new RedisStorageFactory($loop, new NullLogger());
     assertTrue($factory->supports('redis://localhost'));
     assertTrue($factory->supports('rediss://localhost'));
     assertTrue($factory->supports('redis://:foobar@localhost'));
@@ -22,13 +23,13 @@ it('supports redis scheme', function () {
 
 it('doesn\'t support other schemes', function () {
     $loop = Factory::create();
-    $factory = new RedisStorageFactory($loop);
+    $factory = new RedisStorageFactory($loop, new NullLogger());
     assertFalse($factory->supports('foo://localhost'));
 });
 
 it('creates a storage instance', function () {
     $loop = Factory::create();
-    $factory = new RedisStorageFactory($loop);
+    $factory = new RedisStorageFactory($loop, new NullLogger());
 
     if (!$factory->supports($_SERVER['REDIS_DSN'])) {
         throw new \LogicException('Your Redis DSN is misconfigured in phpunit.xml.');

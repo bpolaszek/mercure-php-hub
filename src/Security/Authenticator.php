@@ -3,7 +3,6 @@
 namespace BenTools\MercurePHP\Security;
 
 use BenTools\MercurePHP\Configuration\Configuration;
-use Exception;
 use Lcobucci\JWT\Parser;
 use Lcobucci\JWT\Signer;
 use Lcobucci\JWT\Signer\Key;

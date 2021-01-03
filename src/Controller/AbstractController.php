@@ -2,24 +2,25 @@
 
 namespace BenTools\MercurePHP\Controller;
 
-use BenTools\MercurePHP\Helpers\LoggerAwareTrait;
+use BenTools\MercurePHP\Configuration\WithConfigTrait;
 use BenTools\MercurePHP\Storage\StorageInterface;
 use BenTools\MercurePHP\Transport\TransportInterface;
 use BenTools\Psr7\RequestMatcherInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Log\LoggerInterface;
 use React\Promise\PromiseInterface;
 
 abstract class AbstractController implements RequestMatcherInterface
 {
-    use LoggerAwareTrait;
+    use WithConfigTrait;
 
-    protected array $config = [];
-    protected ?TransportInterface $transport;
-    protected ?StorageInterface $storage;
+    protected LoggerInterface $logger;
+    protected TransportInterface $transport;
+    protected StorageInterface $storage;
 
     abstract public function __invoke(ServerRequestInterface $request): PromiseInterface;
 
-    public function withTransport(TransportInterface $transport): self
+    final public function withTransport(TransportInterface $transport): self
     {
         $clone = clone $this;
         $clone->transport = $transport;
@@ -27,7 +28,7 @@ abstract class AbstractController implements RequestMatcherInterface
         return $clone;
     }
 
-    public function withStorage(StorageInterface $storage): self
+    final public function withStorage(StorageInterface $storage): self
     {
         $clone = clone $this;
         $clone->storage = $storage;

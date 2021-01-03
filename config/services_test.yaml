@@ -1,0 +1,7 @@
+services:
+
+    BenTools\MercurePHP\Tests\Classes\ServicesByTagLocator:
+        public: true
+        arguments:
+            $services:
+                mercure.controller: !tagged_iterator mercure.controller

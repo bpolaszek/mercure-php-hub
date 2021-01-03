@@ -4,6 +4,7 @@ namespace BenTools\MercurePHP\Command;
 
 use BenTools\MercurePHP\Configuration\Configuration;
 use BenTools\MercurePHP\Hub\HubFactory;
+use BenTools\MercurePHP\Hub\HubFactoryInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 use React\EventLoop\Factory;
@@ -23,17 +24,20 @@ final class ServeCommand extends Command
     protected static $defaultName = 'mercure:serve';
 
     private Configuration $configuration;
+    private HubFactoryInterface $factory;
     private LoopInterface $loop;
     private ?LoggerInterface $logger;
 
     public function __construct(
         Configuration $configuration,
-        ?LoopInterface $loop = null,
+        HubFactoryInterface $factory,
+        LoopInterface $loop,
         ?LoggerInterface $logger = null
     ) {
         parent::__construct();
         $this->configuration = $configuration;
-        $this->loop = $loop ?? Factory::create();
+        $this->factory = $factory;
+        $this->loop = $loop;
         $this->logger = $logger;
     }
 
@@ -44,13 +48,14 @@ final class ServeCommand extends Command
         $logger = $this->logger ?? new ConsoleLogger($output, [LogLevel::INFO => OutputInterface::VERBOSITY_NORMAL]);
         try {
             $config = $this->configuration->overrideWith(without_nullish_values($input->getOptions()))->asArray();
+            $factory = $this->factory->withConfig($config);
             $loop->futureTick(
                 function () use ($config, $output) {
                     $this->displayConfiguration($config, $output);
                 }
             );
 
-            $hub = (new HubFactory($config, $loop, $logger))->create();
+            $hub = $factory->create();
             $hub->run();
 
             if (\SIGINT === $hub->getShutdownSignal()) {

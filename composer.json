@@ -18,7 +18,10 @@
     "autoload-dev": {
         "psr-4": {
             "BenTools\\MercurePHP\\Tests\\": "tests"
-        }
+        },
+        "files": [
+            "tests/Helpers.php"
+        ]
     },
     "require": {
         "php": ">=7.4",

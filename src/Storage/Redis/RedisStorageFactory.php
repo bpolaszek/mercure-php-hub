@@ -2,7 +2,6 @@
 
 namespace BenTools\MercurePHP\Storage\Redis;
 
-use BenTools\MercurePHP\Helpers\LoggerAwareTrait;
 use BenTools\MercurePHP\Helpers\RedisHelper;
 use BenTools\MercurePHP\Storage\StorageFactoryInterface;
 use Clue\React\Redis\Client as AsynchronousClient;
@@ -17,11 +16,10 @@ use function React\Promise\resolve;
 
 final class RedisStorageFactory implements StorageFactoryInterface
 {
-    use LoggerAwareTrait;
-
     private LoopInterface $loop;
+    private LoggerInterface $logger;
 
-    public function __construct(LoopInterface $loop, ?LoggerInterface $logger = null)
+    public function __construct(LoopInterface $loop, LoggerInterface $logger)
     {
         $this->loop = $loop;
         $this->logger = $logger;
@@ -42,7 +40,7 @@ final class RedisStorageFactory implements StorageFactoryInterface
                         $client->on(
                             'close',
                             function () {
-                                $this->logger()->error('Connection closed.');
+                                $this->logger->error('Connection closed.');
                                 $this->loop->stop();
                             }
                         );
@@ -51,7 +49,7 @@ final class RedisStorageFactory implements StorageFactoryInterface
                     },
                     function (\Exception $exception) {
                         $this->loop->stop();
-                        $this->logger()->error($exception->getMessage());
+                        $this->logger->error($exception->getMessage());
                     }
                 ),
             'sync' => resolve(new SynchronousClient($dsn)),
@@ -66,7 +64,7 @@ final class RedisStorageFactory implements StorageFactoryInterface
                     }
 
                     // Sounds weird, but helps in detecting an anomaly during connection
-                    RedisHelper::testAsynchronousClient($clients['async'], $this->loop, $this->logger());
+                    RedisHelper::testAsynchronousClient($clients['async'], $this->loop, $this->logger);
 
                     return $clients;
                 }

@@ -6,15 +6,14 @@ use BenTools\MercurePHP\Configuration\Configuration;
 use BenTools\MercurePHP\Controller\SubscribeController;
 use BenTools\MercurePHP\Exception\Http\AccessDeniedHttpException;
 use BenTools\MercurePHP\Exception\Http\BadRequestHttpException;
-use BenTools\MercurePHP\Security\Authenticator;
 use BenTools\MercurePHP\Storage\NullStorage\NullStorage;
 use BenTools\MercurePHP\Tests\Classes\NullTransport;
 use Lcobucci\JWT\Builder;
-use Lcobucci\JWT\Parser;
 use Lcobucci\JWT\Signer\Hmac\Sha256;
 use Lcobucci\JWT\Signer\Key;
 use Lcobucci\JWT\Token;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Log\NullLogger;
 use React\EventLoop\Factory;
 use RingCentral\Psr7\ServerRequest;
 use RingCentral\Psr7\Uri;
@@ -24,14 +23,14 @@ use function PHPUnit\Framework\assertEquals;
 use function PHPUnit\Framework\assertFalse;
 use function PHPUnit\Framework\assertTrue;
 
-function createController(Configuration $configuration, ?Authenticator $authenticator = null)
+function createController(Configuration $configuration): SubscribeController
 {
     $config = $configuration->asArray();
-    $authenticator ??= new Authenticator(new Parser(), new Key($config['jwt_key']), new Sha256());
 
-    return (new SubscribeController($config, $authenticator))
+    return (new SubscribeController(Factory::create(), new NullLogger()))
         ->withTransport(new NullTransport())
         ->withStorage(new NullStorage())
+        ->withConfig($config)
         ;
 }
 
