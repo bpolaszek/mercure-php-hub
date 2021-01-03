@@ -10,7 +10,6 @@ use BenTools\MercurePHP\Security\Authenticator;
 use BenTools\MercurePHP\Security\TopicMatcher;
 use BenTools\MercurePHP\Model\Message;
 use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use React\EventLoop\Factory;
 use React\EventLoop\LoopInterface;
@@ -40,11 +39,11 @@ final class SubscribeController extends AbstractController
         $this->loop = $loop ?? Factory::create();
     }
 
-    public function __invoke(Request $request): ResponseInterface
+    public function __invoke(Request $request): PromiseInterface
     {
 
         if ('OPTIONS' === $request->getMethod()) {
-            return new Response(200);
+            return resolve(new Response(200));
         }
 
         $request = $this->withAttributes($request);
@@ -65,7 +64,7 @@ final class SubscribeController extends AbstractController
             'Cache-Control' => 'no-cache',
         ];
 
-        return new Response(200, $headers, $stream);
+        return resolve(new Response(200, $headers, $stream));
     }
 
     public function matchRequest(RequestInterface $request): bool

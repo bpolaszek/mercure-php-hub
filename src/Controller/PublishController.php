@@ -9,10 +9,12 @@ use BenTools\MercurePHP\Security\TopicMatcher;
 use BenTools\MercurePHP\Model\Message;
 use Lcobucci\JWT\Token;
 use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Ramsey\Uuid\Uuid;
 use React\Http\Message\Response;
+use React\Promise\PromiseInterface;
+
+use function React\Promise\resolve;
 
 final class PublishController extends AbstractController
 {
@@ -23,7 +25,7 @@ final class PublishController extends AbstractController
         $this->authenticator = $authenticator;
     }
 
-    public function __invoke(ServerRequestInterface $request): ResponseInterface
+    public function __invoke(ServerRequestInterface $request): PromiseInterface
     {
         $request = $this->withAttributes($request);
         $token = $request->getAttribute('token');
@@ -61,14 +63,12 @@ final class PublishController extends AbstractController
             )
         );
 
-        return new Response(
-            201,
-            [
-                'Content-Type' => 'text/plain',
-                'Cache-Control' => 'no-cache',
-            ],
-            $id
-        );
+        $headers = [
+            'Content-Type' => 'text/plain',
+            'Cache-Control' => 'no-cache',
+        ];
+
+        return resolve(new Response(201, $headers, $id));
     }
 
     public function matchRequest(RequestInterface $request): bool

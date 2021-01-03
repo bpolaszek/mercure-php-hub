@@ -8,7 +8,6 @@ use BenTools\MercurePHP\Metrics\MetricsHandlerInterface;
 use BenTools\MercurePHP\Security\CORS;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use React\EventLoop\LoopInterface;
@@ -17,15 +16,13 @@ use React\Promise\PromiseInterface;
 use React\Socket;
 use React\Socket\ConnectionInterface;
 
-use function React\Promise\resolve;
-
-final class Hub implements RequestHandlerInterface
+final class Hub
 {
     use LoggerAwareTrait;
 
     private array $config;
     private LoopInterface $loop;
-    private RequestHandlerInterface $requestHandler;
+    private RequestHandler $requestHandler;
     private CORS $cors;
     private MetricsHandlerInterface $metricsHandler;
     private ?int $shutdownSignal;
@@ -33,7 +30,7 @@ final class Hub implements RequestHandlerInterface
     public function __construct(
         array $config,
         LoopInterface $loop,
-        RequestHandlerInterface $requestHandler,
+        RequestHandler $requestHandler,
         MetricsHandlerInterface $metricsHandler,
         ?LoggerInterface $logger = null
     ) {
@@ -67,17 +64,10 @@ final class Hub implements RequestHandlerInterface
         $this->serve($localAddress, $socket, $this->loop);
     }
 
-    public function handle(ServerRequestInterface $request): ResponseInterface
-    {
-        return $this->cors->decorateResponse(
-            $request,
-            $this->requestHandler->handle($request)
-        );
-    }
-
     public function __invoke(ServerRequestInterface $request): PromiseInterface
     {
-        return resolve($this->handle($request));
+        return $this->requestHandler->handle($request)
+            ->then(fn(ResponseInterface $response) => $this->cors->decorateResponse($request, $response));
     }
 
     private function createSocketConnection(string $localAddress, LoopInterface $loop): Socket\Server

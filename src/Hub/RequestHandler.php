@@ -5,13 +5,14 @@ namespace BenTools\MercurePHP\Hub;
 use BenTools\MercurePHP\Controller\AbstractController;
 use BenTools\MercurePHP\Exception\Http\HttpException;
 use BenTools\MercurePHP\Exception\Http\NotFoundHttpException;
-use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Server\RequestHandlerInterface;
 use Ramsey\Uuid\Uuid;
 use React\Http\Message\Response;
+use React\Promise\PromiseInterface;
 
-final class RequestHandler implements RequestHandlerInterface
+use function React\Promise\resolve;
+
+final class RequestHandler
 {
     private const CLIENT_NAMESPACE = '530344d8-a802-11ea-bb37-0242ac130002';
 
@@ -22,7 +23,7 @@ final class RequestHandler implements RequestHandlerInterface
         $this->controllers = (fn(AbstractController ...$controllers) => $controllers)(...$controllers);
     }
 
-    public function handle(ServerRequestInterface $request): ResponseInterface
+    public function handle(ServerRequestInterface $request): PromiseInterface
     {
         try {
             $request = $this->withClientId($request);
@@ -30,10 +31,12 @@ final class RequestHandler implements RequestHandlerInterface
 
             return $handle($request);
         } catch (HttpException $e) {
-            return new Response(
-                $e->getStatusCode(),
-                ['Content-Type' => 'text/plain'],
-                $e->getMessage(),
+            return resolve(
+                new Response(
+                    $e->getStatusCode(),
+                    ['Content-Type' => 'text/plain'],
+                    $e->getMessage(),
+                )
             );
         }
     }

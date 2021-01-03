@@ -15,9 +15,11 @@ use Lcobucci\JWT\Signer\Hmac\Sha256;
 use Lcobucci\JWT\Signer\Key;
 use Lcobucci\JWT\Token;
 use Psr\Http\Message\ServerRequestInterface;
+use React\EventLoop\Factory;
 use RingCentral\Psr7\ServerRequest;
 use RingCentral\Psr7\Uri;
 
+use function Clue\React\Block\await;
 use function PHPUnit\Framework\assertEquals;
 use function PHPUnit\Framework\assertFalse;
 use function PHPUnit\Framework\assertTrue;
@@ -106,9 +108,10 @@ it('yells if token is expired', function () {
 })->throws(AccessDeniedHttpException::class, 'Your token has expired.');
 
 it('creates an event stream response', function () {
+    $loop = Factory::create();
     $handle = createController(new Configuration(['jwt_key' => 'foo', 'allow_anonymous' => true]));
     $request = createSubscribeRequest();
-    $response = $handle($request);
+    $response = await($handle($request), $loop);
     assertEquals('text/event-stream', $response->getHeaderLine('Content-Type'));
 });
 

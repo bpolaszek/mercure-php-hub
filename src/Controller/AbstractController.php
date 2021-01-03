@@ -6,9 +6,8 @@ use BenTools\MercurePHP\Helpers\LoggerAwareTrait;
 use BenTools\MercurePHP\Storage\StorageInterface;
 use BenTools\MercurePHP\Transport\TransportInterface;
 use BenTools\Psr7\RequestMatcherInterface;
-use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use React\EventLoop\LoopInterface;
+use React\Promise\PromiseInterface;
 
 abstract class AbstractController implements RequestMatcherInterface
 {
@@ -18,7 +17,7 @@ abstract class AbstractController implements RequestMatcherInterface
     protected ?TransportInterface $transport;
     protected ?StorageInterface $storage;
 
-    abstract public function __invoke(ServerRequestInterface $request): ResponseInterface;
+    abstract public function __invoke(ServerRequestInterface $request): PromiseInterface;
 
     public function withTransport(TransportInterface $transport): self
     {
