@@ -29,10 +29,25 @@ services:
         autowire: true      # Automatically injects dependencies in your services.
         autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
 
+    _instanceof:
+        BenTools\MercurePHP\Transport\TransportFactoryInterface:
+            tags: ['mercure.transport']
+        BenTools\MercurePHP\Storage\StorageFactoryInterface:
+            tags: ['mercure.storage']
+        BenTools\MercurePHP\Metrics\MetricsHandlerFactoryInterface:
+            tags: ['mercure.metrics_handler']
+        BenTools\MercurePHP\Controller\AbstractController:
+            tags: ['mercure.controller']
+
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
-    BenTools\MercurePHP\Command\:
-        resource: '../src/Command/'
+    BenTools\MercurePHP\:
+        resource: '../src/'
+        exclude:
+            - '../src/Kernel.php'
+            - '../src/functions.php'
+            - '../src/Security/Authenticator.php'
+            - '../src/Model/'
 
     BenTools\MercurePHP\Configuration\Configuration:
         arguments:
@@ -50,3 +65,37 @@ services:
                 subscriber_jwt_key: '%subscriber_jwt_key%'
                 subscriber_jwt_algorithm: '%subscriber_jwt_algorithm%'
                 allow_anonymous: '%allow_anonymous%'
+
+    BenTools\MercurePHP\Transport\TransportFactoryInterface: '@BenTools\MercurePHP\Transport\TransportFactory'
+    BenTools\MercurePHP\Storage\StorageFactoryInterface: '@BenTools\MercurePHP\Storage\StorageFactory'
+    BenTools\MercurePHP\Metrics\MetricsHandlerFactoryInterface: '@BenTools\MercurePHP\Metrics\MetricsHandlerFactory'
+
+    BenTools\MercurePHP\Transport\TransportFactory:
+        arguments:
+            $factories: !tagged_iterator mercure.transport
+
+    BenTools\MercurePHP\Storage\StorageFactory:
+        arguments:
+            $factories: !tagged_iterator mercure.storage
+
+    BenTools\MercurePHP\Metrics\MetricsHandlerFactory:
+        arguments:
+            $factories: !tagged_iterator mercure.metrics_handler
+
+    bentools.mercure.subscriber_authenticator:
+        class: BenTools\MercurePHP\Security\Authenticator
+        factory: ['BenTools\MercurePHP\Security\Authenticator', 'createSubscriberAuthenticator']
+
+    bentools.mercure.publisher_authenticator:
+        class: BenTools\MercurePHP\Security\Authenticator
+        factory: ['BenTools\MercurePHP\Security\Authenticator', 'createPublisherAuthenticator']
+
+    BenTools\MercurePHP\Hub\HubFactoryInterface: '@BenTools\MercurePHP\Hub\HubFactory'
+    BenTools\MercurePHP\Hub\HubFactory:
+        arguments:
+            $controllers: !tagged_iterator mercure.controller
+
+    React\EventLoop\Factory: ~
+
+    React\EventLoop\LoopInterface:
+        factory: ['@React\EventLoop\Factory', 'create']

@@ -2,25 +2,20 @@
 
 namespace BenTools\MercurePHP\Metrics\Redis;
 
-use BenTools\MercurePHP\Helpers\LoggerAwareTrait;
 use BenTools\MercurePHP\Helpers\RedisHelper;
 use BenTools\MercurePHP\Metrics\MetricsHandlerFactoryInterface;
 use Clue\React\Redis\Client as AsynchronousClient;
 use Clue\React\Redis\Factory;
-use Psr\Log\LoggerInterface;
 use React\EventLoop\LoopInterface;
 use React\Promise\PromiseInterface;
 
 final class RedisMetricsHandlerFactory implements MetricsHandlerFactoryInterface
 {
-    use LoggerAwareTrait;
-
     private LoopInterface $loop;
 
-    public function __construct(LoopInterface $loop, ?LoggerInterface $logger)
+    public function __construct(LoopInterface $loop)
     {
         $this->loop = $loop;
-        $this->logger = $logger;
     }
 
     public function supports(string $dsn): bool

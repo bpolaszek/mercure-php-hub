@@ -10,6 +10,7 @@ use BenTools\MercurePHP\Model\Message;
 use Lcobucci\JWT\Token;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
 use React\Http\Message\Response;
 use React\Promise\PromiseInterface;
@@ -20,9 +21,9 @@ final class PublishController extends AbstractController
 {
     private Authenticator $authenticator;
 
-    public function __construct(Authenticator $authenticator)
+    public function __construct(LoggerInterface $logger)
     {
-        $this->authenticator = $authenticator;
+        $this->logger = $logger;
     }
 
     public function __invoke(ServerRequestInterface $request): PromiseInterface
@@ -55,7 +56,7 @@ final class PublishController extends AbstractController
             ->publish($input['topic'], $message)
             ->then(fn () => $this->storage->storeMessage($input['topic'], $message));
 
-        $this->logger()->debug(
+        $this->logger->debug(
             \sprintf(
                 'Created message %s on topic %s',
                 $message->getId(),
@@ -75,6 +76,14 @@ final class PublishController extends AbstractController
     {
         return 'POST' === $request->getMethod()
             && '/.well-known/mercure' === $request->getUri()->getPath();
+    }
+
+    public function withConfig(array $config): self
+    {
+        /** @var self $clone */
+        $clone = parent::withConfig($config);
+
+        return $clone->withAuthenticator(Authenticator::createPublisherAuthenticator($config));
     }
 
     private function normalizeInput(array $input): array
@@ -129,5 +138,13 @@ final class PublishController extends AbstractController
         }
 
         return $topicSelectors;
+    }
+
+    private function withAuthenticator(Authenticator $authenticator): self
+    {
+        $clone = clone $this;
+        $clone->authenticator = $authenticator;
+
+        return $clone;
     }
 }

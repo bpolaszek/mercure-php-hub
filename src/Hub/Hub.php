@@ -3,25 +3,22 @@
 namespace BenTools\MercurePHP\Hub;
 
 use BenTools\MercurePHP\Configuration\Configuration;
-use BenTools\MercurePHP\Helpers\LoggerAwareTrait;
 use BenTools\MercurePHP\Metrics\MetricsHandlerInterface;
 use BenTools\MercurePHP\Security\CORS;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Log\LoggerInterface;
-use Psr\Log\NullLogger;
 use React\EventLoop\LoopInterface;
 use React\Http;
 use React\Promise\PromiseInterface;
 use React\Socket;
 use React\Socket\ConnectionInterface;
 
-final class Hub
+final class Hub implements HubInterface
 {
-    use LoggerAwareTrait;
-
     private array $config;
     private LoopInterface $loop;
+    private LoggerInterface $logger;
     private RequestHandler $requestHandler;
     private CORS $cors;
     private MetricsHandlerInterface $metricsHandler;
@@ -32,13 +29,13 @@ final class Hub
         LoopInterface $loop,
         RequestHandler $requestHandler,
         MetricsHandlerInterface $metricsHandler,
-        ?LoggerInterface $logger = null
+        LoggerInterface $logger
     ) {
         $this->config = $config;
         $this->loop = $loop;
         $this->requestHandler = $requestHandler;
         $this->metricsHandler = $metricsHandler;
-        $this->logger = $logger ?? new NullLogger();
+        $this->logger = $logger;
         $this->cors = new CORS($config);
     }
 
@@ -55,13 +52,18 @@ final class Hub
             fn() => $this->metricsHandler->getNbUsers()->then(
                 function (int $nbUsers) {
                     $memory = \memory_get_usage(true) / 1024 / 1024;
-                    $this->logger()->debug("Users: {$nbUsers} - Memory: {$memory}MB");
+                    $this->logger->debug("Users: {$nbUsers} - Memory: {$memory}MB");
                 }
             )
         );
 
         $socket = $this->createSocketConnection($localAddress, $this->loop);
         $this->serve($localAddress, $socket, $this->loop);
+    }
+
+    public function getShutdownSignal(): ?int
+    {
+        return $this->shutdownSignal;
     }
 
     public function __invoke(ServerRequestInterface $request): PromiseInterface
@@ -86,13 +88,8 @@ final class Hub
         $server = new Http\Server($loop, $this);
         $server->listen($socket);
 
-        $this->logger()->info("Server running at http://" . $localAddress);
+        $this->logger->info("Server running at http://" . $localAddress);
         $loop->run();
-    }
-
-    public function getShutdownSignal(): ?int
-    {
-        return $this->shutdownSignal;
     }
 
     private function stop(int $signal, LoopInterface $loop): void

@@ -9,16 +9,16 @@ final class MetricsHandlerFactory implements MetricsHandlerFactoryInterface
     /**
      * @var MetricsHandlerFactoryInterface[]
      */
-    private array $factories;
+    private iterable $factories;
 
-    public function __construct(array $factories)
+    public function __construct(iterable $factories)
     {
-        $this->factories = (fn(MetricsHandlerFactoryInterface ...$factories) => $factories)(...$factories);
+        $this->factories = $factories;
     }
 
     public function supports(string $dsn): bool
     {
-        foreach ($this->factories as $factory) {
+        foreach ($this->getFactories() as $factory) {
             if ($factory->supports($dsn)) {
                 return true;
             }
@@ -29,7 +29,7 @@ final class MetricsHandlerFactory implements MetricsHandlerFactoryInterface
 
     public function create(string $dsn): PromiseInterface
     {
-        foreach ($this->factories as $factory) {
+        foreach ($this->getFactories() as $factory) {
             if (!$factory->supports($dsn)) {
                 continue;
             }
@@ -38,5 +38,21 @@ final class MetricsHandlerFactory implements MetricsHandlerFactoryInterface
         }
 
         throw new \RuntimeException(\sprintf('Invalid metrics handler DSN %s', $dsn));
+    }
+
+    private function getFactories(): array
+    {
+        if (\is_array($this->factories)) {
+            return $this->factories;
+        }
+
+        $factories = [];
+        foreach ($this->factories as $factory) {
+            if ($factory === $this) {
+                continue;
+            }
+            $factories[] = $factory;
+        }
+        return $this->factories = (fn(MetricsHandlerFactoryInterface ...$factories) => $factories)(...$factories);
     }
 }

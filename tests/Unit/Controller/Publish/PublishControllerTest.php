@@ -6,16 +6,15 @@ use BenTools\MercurePHP\Configuration\Configuration;
 use BenTools\MercurePHP\Controller\PublishController;
 use BenTools\MercurePHP\Exception\Http\AccessDeniedHttpException;
 use BenTools\MercurePHP\Exception\Http\BadRequestHttpException;
-use BenTools\MercurePHP\Security\Authenticator;
 use BenTools\MercurePHP\Storage\NullStorage\NullStorage;
 use BenTools\MercurePHP\Tests\Classes\NullTransport;
 use Lcobucci\JWT\Builder;
-use Lcobucci\JWT\Parser;
 use Lcobucci\JWT\Signer\Hmac\Sha256;
 use Lcobucci\JWT\Signer\Key;
 use Lcobucci\JWT\Token;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Log\NullLogger;
 use Ramsey\Uuid\Uuid;
 use React\EventLoop\Factory;
 use RingCentral\Psr7\ServerRequest;
@@ -26,14 +25,14 @@ use function PHPUnit\Framework\assertFalse;
 use function PHPUnit\Framework\assertInstanceOf;
 use function PHPUnit\Framework\assertTrue;
 
-function createController(Configuration $configuration, ?Authenticator $authenticator = null)
+function createController(Configuration $configuration): PublishController
 {
     $config = $configuration->asArray();
-    $authenticator ??= new Authenticator(new Parser(), new Key($config['jwt_key']), new Sha256());
 
-    return (new PublishController($authenticator))
+    return (new PublishController(new NullLogger()))
         ->withStorage(new NullStorage())
         ->withTransport(new NullTransport())
+        ->withConfig($config)
         ;
 }
 

@@ -2,7 +2,6 @@
 
 namespace BenTools\MercurePHP\Transport\Redis;
 
-use BenTools\MercurePHP\Helpers\LoggerAwareTrait;
 use BenTools\MercurePHP\Helpers\RedisHelper;
 use BenTools\MercurePHP\Transport\TransportFactoryInterface;
 use Clue\React\Redis\Client as AsynchronousClient;
@@ -15,11 +14,10 @@ use function React\Promise\all;
 
 final class RedisTransportFactory implements TransportFactoryInterface
 {
-    use LoggerAwareTrait;
-
     private LoopInterface $loop;
+    private LoggerInterface $logger;
 
-    public function __construct(LoopInterface $loop, ?LoggerInterface $logger = null)
+    public function __construct(LoopInterface $loop, LoggerInterface $logger)
     {
         $this->loop = $loop;
         $this->logger = $logger;
@@ -40,7 +38,7 @@ final class RedisTransportFactory implements TransportFactoryInterface
                         $client->on(
                             'close',
                             function () {
-                                $this->logger()->error('Connection closed.');
+                                $this->logger->error('Connection closed.');
                                 $this->loop->stop();
                             }
                         );
@@ -58,7 +56,7 @@ final class RedisTransportFactory implements TransportFactoryInterface
                         $client->on(
                             'close',
                             function () {
-                                $this->logger()->error('Connection closed.');
+                                $this->logger->error('Connection closed.');
                                 $this->loop->stop();
                             }
                         );
@@ -67,7 +65,7 @@ final class RedisTransportFactory implements TransportFactoryInterface
                     },
                     function (\Exception $exception) {
                         $this->loop->stop();
-                        $this->logger()->error($exception->getMessage());
+                        $this->logger->error($exception->getMessage());
                     }
                 ),
         ];
@@ -80,8 +78,8 @@ final class RedisTransportFactory implements TransportFactoryInterface
                         $clients[$key] = $client;
                     }
 
-                    RedisHelper::testAsynchronousClient($clients['subscriber'], $this->loop, $this->logger());
-                    RedisHelper::testAsynchronousClient($clients['publisher'], $this->loop, $this->logger());
+                    RedisHelper::testAsynchronousClient($clients['subscriber'], $this->loop, $this->logger);
+                    RedisHelper::testAsynchronousClient($clients['publisher'], $this->loop, $this->logger);
 
                     return $clients;
                 }
