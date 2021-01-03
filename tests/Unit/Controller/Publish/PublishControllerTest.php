@@ -17,8 +17,10 @@ use Lcobucci\JWT\Token;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Ramsey\Uuid\Uuid;
+use React\EventLoop\Factory;
 use RingCentral\Psr7\ServerRequest;
 
+use function Clue\React\Block\await;
 use function PHPUnit\Framework\assertEquals;
 use function PHPUnit\Framework\assertFalse;
 use function PHPUnit\Framework\assertInstanceOf;
@@ -183,21 +185,23 @@ it('yells when trying to dispatch an unauthorized update', function (?array $pos
 });
 
 it('publishes an update to the hub', function () {
+    $loop = Factory::create();
     $token = createJWT(['mercure' => ['publish' => []]], 'foo');
     $handle = createController(new Configuration(['jwt_key' => 'foo']));
     $request = authenticate(createPublishRequest(['topic' => '/foo', 'data' => 'bar']), $token);
-    $response = $handle($request);
+    $response = await($handle($request), $loop);
     assertInstanceOf(ResponseInterface::class, $response);
     assertEquals(201, $response->getStatusCode());
     assertTrue(Uuid::isValid((string) $response->getBody()));
 });
 
 it('accepts an UUID from client', function () {
+    $loop = Factory::create();
     $token = createJWT(['mercure' => ['publish' => []]], 'foo');
     $handle = createController(new Configuration(['jwt_key' => 'foo']));
     $id = (string) Uuid::uuid4();
     $request = authenticate(createPublishRequest(['topic' => '/foo', 'data' => 'bar', 'id' => $id]), $token);
-    $response = $handle($request);
+    $response = await($handle($request), $loop);
     $content = (string) $response->getBody();
     assertInstanceOf(ResponseInterface::class, $response);
     assertEquals(201, $response->getStatusCode());
