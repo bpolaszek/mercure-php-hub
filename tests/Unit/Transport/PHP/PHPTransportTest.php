@@ -2,11 +2,12 @@
 
 namespace BenTools\MercurePHP\Tests\Unit\Transport\PHP;
 
-use BenTools\MercurePHP\Message\Message;
+use BenTools\MercurePHP\Model\Message;
 use BenTools\MercurePHP\Transport\PHP\PHPTransport;
 use React\EventLoop;
 
 use function Clue\React\Block\await;
+use function PHPUnit\Framework\assertEquals;
 
 it('transports messages', function () {
     $loop = EventLoop\Factory::create();
@@ -28,5 +29,5 @@ it('transports messages', function () {
         '/bar/baz' => [new Message('bat')],
     ];
 
-    \assertEquals($expected, $messages);
+    assertEquals($expected, $messages);
 });

@@ -11,6 +11,8 @@ use Psr\Http\Message\ServerRequestInterface;
 use RingCentral\Psr7\Response;
 use RingCentral\Psr7\ServerRequest;
 
+use function PHPUnit\Framework\assertSame;
+
 $controllers = [
     new class extends AbstractController {
         public function __invoke(ServerRequestInterface $request): ResponseInterface
@@ -54,8 +56,8 @@ it(
 
         $request = new ServerRequest('POST', '/foo');
         $response = $requestHandler->handle($request);
-        \assertEquals(200, $response->getStatusCode());
-        \assertEquals('bar', $response->getBody());
+        assertSame(200, $response->getStatusCode());
+        assertSame('bar', (string) $response->getBody());
     }
 );
 
@@ -66,8 +68,8 @@ it(
 
         $request = new ServerRequest('POST', '/bad');
         $response = $requestHandler->handle($request);
-        \assertEquals(400, $response->getStatusCode());
-        \assertEquals('Nope.', $response->getBody());
+        assertSame(400, $response->getStatusCode());
+        assertSame('Nope.', (string) $response->getBody());
     }
 );
 
@@ -78,7 +80,7 @@ it(
 
         $request = new ServerRequest('POST', '/unknown');
         $response = $requestHandler->handle($request);
-        \assertEquals(404, $response->getStatusCode());
-        \assertEquals('Not found.', $response->getBody());
+        assertSame(404, $response->getStatusCode());
+        assertSame('Not found.', (string) $response->getBody());
     }
 );

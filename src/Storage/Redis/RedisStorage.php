@@ -4,7 +4,7 @@ namespace BenTools\MercurePHP\Storage\Redis;
 
 use BenTools\MercurePHP\Security\TopicMatcher;
 use BenTools\MercurePHP\Storage\StorageInterface;
-use BenTools\MercurePHP\Message\Message;
+use BenTools\MercurePHP\Model\Message;
 use Clue\React\Redis\Client as AsynchronousClient;
 use Predis\Client as SynchronousClient;
 use React\Promise\PromiseInterface;
@@ -60,14 +60,12 @@ final class RedisStorage implements StorageInterface
     {
         $nextId = $this->sync->get('next:' . $id);
 
-        /** @phpstan-ignore-next-line */
         if (null === $nextId) {
             return [];
         }
 
         $payload = $this->sync->get('data:' . $nextId);
 
-        /** @phpstan-ignore-next-line */
         if (null === $payload) {
             return [];
         }

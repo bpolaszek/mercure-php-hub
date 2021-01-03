@@ -14,6 +14,9 @@ use Lcobucci\JWT\Token;
 use RingCentral\Psr7\ServerRequest;
 
 use function BenTools\CartesianProduct\cartesian_product;
+use function PHPUnit\Framework\assertContains;
+use function PHPUnit\Framework\assertInstanceOf;
+use function PHPUnit\Framework\assertTrue;
 
 function createAuthenticator(Key $key, Signer $signer): Authenticator
 {
@@ -39,8 +42,8 @@ it('can authenticate from an Authorization header', function (Signer $signer, Ke
         );
         $authenticator = createAuthenticator($public, $signer);
         $token = $authenticator->authenticate($request);
-        \assertTrue($token instanceof Token);
-        \assertTrue($token->verify($signer, $public));
+        assertTrue($token instanceof Token);
+        assertTrue($token->verify($signer, $public));
 })->with(function () use ($public, $private) {
     yield [new Signer\Hmac\Sha256(), new Key('foo'), new Key('foo')];
     yield [new Signer\Rsa\Sha512(), new Key($private), new Key($public)];
@@ -51,8 +54,8 @@ it('can authenticate from an Cookie header', function (Signer $signer, Key $priv
             ->withCookieParams(['mercureAuthorization' => createJWT($private, [], $signer)]);
         $authenticator = createAuthenticator($public, $signer);
         $token = $authenticator->authenticate($request);
-        \assertTrue($token instanceof Token);
-        \assertTrue($token->verify($signer, $public));
+        assertTrue($token instanceof Token);
+        assertTrue($token->verify($signer, $public));
 })->with(function () use ($public, $private) {
     yield [new Signer\Hmac\Sha256(), new Key('foo'), new Key('foo')];
     yield [new Signer\Rsa\Sha512(), new Key($private), new Key($public)];
@@ -65,9 +68,9 @@ it('prefers Authorization header over Cookie', function (Signer $signer, Key $pr
             ->withCookieParams(['mercureAuthorization' => createJWT($private, ['baz'], $signer)]);
         $authenticator = createAuthenticator($public, $signer);
         $token = $authenticator->authenticate($request);
-        \assertTrue($token instanceof Token);
-        \assertTrue($token->verify($signer, $public));
-        \assertContains('bar', $token->getClaim('mercure'));
+        assertTrue($token instanceof Token);
+        assertTrue($token->verify($signer, $public));
+        assertContains('bar', $token->getClaim('mercure'));
 })->with(function () use ($public, $private) {
     yield [new Signer\Hmac\Sha256(), new Key('foo'), new Key('foo')];
     yield [new Signer\Rsa\Sha512(), new Key($private), new Key($public)];
@@ -158,7 +161,7 @@ it('creates the subscriber authenticator', function (
     $token = createJWT(new Key($keyPair[1]), [], $signers[$algo]);
     $request = (new ServerRequest('GET', '/'))
         ->withHeader('Authorization', 'Bearer ' . $token);
-    \assertInstanceOf(Token::class, $authenticator->authenticate($request));
+    assertInstanceOf(Token::class, $authenticator->authenticate($request));
 })->with(
     (new FilterIterator(
         $combinations,
@@ -247,7 +250,7 @@ it('creates the publisher authenticator', function (
     $token = createJWT(new Key($keyPair[1]), [], $signers[$algo]);
     $request = (new ServerRequest('GET', '/'))
         ->withHeader('Authorization', 'Bearer ' . $token);
-    \assertInstanceOf(Token::class, $authenticator->authenticate($request));
+    assertInstanceOf(Token::class, $authenticator->authenticate($request));
 })->with(
     (new FilterIterator(
         $combinations,

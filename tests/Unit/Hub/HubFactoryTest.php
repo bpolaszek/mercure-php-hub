@@ -10,6 +10,8 @@ use BenTools\MercurePHP\Transport\TransportFactory;
 use Psr\Log\NullLogger;
 use React\EventLoop\Factory;
 
+use function PHPUnit\Framework\assertInstanceOf;
+
 it('yells if it does not recognize the transport scheme', function () {
     $config = new Configuration([
         Configuration::JWT_KEY => 'foo',
@@ -37,5 +39,5 @@ it('creates a hub otherwise', function () {
         new NullLogger(),
         new NullTransportFactory()
     ))->create();
-    \assertInstanceOf(Hub::class, $hub);
+    assertInstanceOf(Hub::class, $hub);
 });

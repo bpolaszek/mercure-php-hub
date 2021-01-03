@@ -4,13 +4,15 @@ namespace BenTools\MercurePHP\Tests\Unit\Security\TopicMatcher\Publish;
 
 use BenTools\MercurePHP\Security\TopicMatcher;
 use BenTools\MercurePHP\Tests\Classes\FilterIterator;
-use BenTools\MercurePHP\Message\Message;
+use BenTools\MercurePHP\Model\Message;
 use Lcobucci\JWT\Builder;
 use Lcobucci\JWT\Signer\Hmac\Sha256;
 use Lcobucci\JWT\Signer\Key;
 use Lcobucci\JWT\Token;
 
 use function BenTools\CartesianProduct\cartesian_product as combinations;
+use function PHPUnit\Framework\assertEquals;
+use function PHPUnit\Framework\assertSame;
 
 function createMercureJWT(string $key, array $mercureClaim): Token
 {
@@ -69,11 +71,11 @@ test(
     'Topic can be updated only when authorized',
     function (string $topic, Token $token, bool $private, bool $expected) use (&$counter) {
         $result = TopicMatcher::canUpdateTopic($topic, $token, $private);
-        \assertSame($expected, $result);
+        assertSame($expected, $result);
         $counter++;
     }
 )->with($combinations->asArray());
 
 test('all combinations have been tested', function () use ($combinations, &$counter) {
-    \assertEquals(\count($combinations), $counter);
+    assertEquals(\count($combinations), $counter);
 });

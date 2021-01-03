@@ -16,6 +16,9 @@ use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Component\Process\Process;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
+use function PHPUnit\Framework\assertCount;
+use function PHPUnit\Framework\assertEquals;
+
 function createJWT(array $claims, string $key): Token
 {
     $builder = new Builder();
@@ -51,36 +54,33 @@ function publish(HttpClientInterface $client, UriInterface $publishUrl, Token $t
     }
 }
 
-$url = null;
+$url = new Uri(sprintf("http://%s", $_SERVER['ADDR']));
+$transport = $_SERVER['TRANSPORT_URL'] ?? null;
 $process = null;
 
-beforeAll(function () use (&$url, &$process) {
-    $url = new Uri(sprintf("http://%s", \getenv('ADDR')));
-    $transport = \getenv('TRANSPORT_URL');
-    if (false === $transport) {
+beforeAll(function () use ($transport, &$process) {
+    if (null === $transport) {
         throw new \RuntimeException('Cannot run test, missing TRANSPORT_URL env var.');
     }
-    $process = new Process(['bin/mercure'], \dirname(__DIR__, 3), [
-        'TRANSPORT_URL' => $transport,
-    ]);
-    $process->setTimeout(60);
-    $process->setIdleTimeout(60);
+    $process = new Process(['bin/mercure'], \dirname(__DIR__, 3));
+    $process->setTimeout(15);
+    $process->setIdleTimeout(15);
     $process->start();
     \sleep(1);
 });
 
 afterAll(function () use (&$process) {
-    $process->stop();
-    \sleep(1);
+    $process->stop(1, \SIGINT);
 });
 
-it('successfully receives missed events', function () use (&$url) {
+it('successfully receives missed events', function () use ($url) {
 
+    $loop = Factory::create();
     for ($uuids = [], $i = 1; $i <= 3; $i++) {
         $uuids[] = (string) Uuid::uuid4();
     }
 
-    $token = createJWT(['mercure' => ['publish' => ['*']]], \getenv('JWT_KEY'));
+    $token = createJWT(['mercure' => ['publish' => ['*']]], $_SERVER['JWT_KEY']);
     $client = HttpClient::create();
     $subscribeUrl = $url->withPath('/.well-known/mercure')
         ->withQuery('topic=/foo&topic=/foobar/{id}&Last-Event-ID=' . $uuids[0]);
@@ -105,19 +105,33 @@ it('successfully receives missed events', function () use (&$url) {
         $response->getContent();
     }
 
-    $loop = Factory::create();
     $eventSource = new EventSource($subscribeUrl, $loop);
-    $eventSource->on('message', function (MessageEvent $message) use (&$receivedEvents) {
-        $id = $message->lastEventId;
-        $data = $message->data;
-        $receivedEvents[$id] = ['data' => $data];
+
+    $stop = function () use ($eventSource, $loop) {
+        $eventSource->close();
+        $loop->stop();
+    };
+
+    $eventSource->on(
+        'message',
+        function (MessageEvent $message) use (&$receivedEvents, $expectedReceivedEvents, $stop) {
+            $id = $message->lastEventId;
+            $data = $message->data;
+            $receivedEvents[$id] = ['data' => $data];
+            if (\count($receivedEvents) >= \count($expectedReceivedEvents)) {
+                $stop();
+            }
+        }
+    );
+
+    $loop->addTimer(4, function () use ($stop) {
+        $stop();
     });
 
-    $loop->addTimer(4, fn() => $eventSource->close());
     $loop->run();
 
-    \assertCount(\count($receivedEvents), $expectedReceivedEvents);
+    assertCount(\count($receivedEvents), $expectedReceivedEvents);
     foreach ($expectedReceivedEvents as $id => $expectedEvent) {
-        \assertEquals($expectedEvent, $receivedEvents[$id]);
+        assertEquals($expectedEvent, $receivedEvents[$id]);
     }
 });

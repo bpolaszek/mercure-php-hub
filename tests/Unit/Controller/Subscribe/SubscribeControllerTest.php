@@ -18,6 +18,10 @@ use Psr\Http\Message\ServerRequestInterface;
 use RingCentral\Psr7\ServerRequest;
 use RingCentral\Psr7\Uri;
 
+use function PHPUnit\Framework\assertEquals;
+use function PHPUnit\Framework\assertFalse;
+use function PHPUnit\Framework\assertTrue;
+
 function createController(Configuration $configuration, ?Authenticator $authenticator = null)
 {
     $config = $configuration->asArray();
@@ -61,13 +65,13 @@ function createSubscribeRequest(array $subscribedTopics = ['/lobby']): ServerReq
 it('will respond to the Mercure publish url', function () {
     $handle = createController(new Configuration(['jwt_key' => 'foo']));
     $request = new ServerRequest('GET', '/.well-known/mercure');
-    \assertTrue($handle->matchRequest($request));
+    assertTrue($handle->matchRequest($request));
 });
 
 it('will not respond when requet method is not get', function () {
     $handle = createController(new Configuration(['jwt_key' => 'foo']));
     $request = new ServerRequest('POST', '/.well-known/mercure');
-    \assertFalse($handle->matchRequest($request));
+    assertFalse($handle->matchRequest($request));
 });
 
 # Authentication / Authorization
@@ -84,7 +88,7 @@ it('doesn\'t yell when anonymous subscriptions are allowed', function () {
     $handle = createController(new Configuration(['jwt_key' => 'foo', 'allow_anonymous' => true]));
     $request = createSubscribeRequest();
     $handle($request);
-    \assertTrue(true);
+    assertTrue(true);
 });
 
 it('yells if token is not signed', function () {
@@ -105,7 +109,7 @@ it('creates an event stream response', function () {
     $handle = createController(new Configuration(['jwt_key' => 'foo', 'allow_anonymous' => true]));
     $request = createSubscribeRequest();
     $response = $handle($request);
-    \assertEquals('text/event-stream', $response->getHeaderLine('Content-Type'));
+    assertEquals('text/event-stream', $response->getHeaderLine('Content-Type'));
 });
 
 it('throws a 400 Bad request if no topic is provided', function () {

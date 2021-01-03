@@ -8,11 +8,13 @@ use BenTools\MercurePHP\Transport\TransportInterface;
 use React\EventLoop\Factory;
 
 use function Clue\React\Block\await;
+use function PHPUnit\Framework\assertEquals;
+use function PHPUnit\Framework\assertInstanceOf;
 
 it('allows only redis dsns', function (string $dsn, bool $expected) {
     $loop = Factory::create();
     $factory = new RedisTransportFactory($loop);
-    \assertEquals($expected, $factory->supports($dsn));
+    assertEquals($expected, $factory->supports($dsn));
 })->with(function () {
     yield ['redis://localhost', true];
     yield ['rediss://localhost', true];
@@ -26,6 +28,6 @@ it('creates an async transport instance', function () {
     $factory = new RedisTransportFactory($loop);
     $promise = $factory->create('redis://localhost');
     $transport = await($promise, $loop);
-    \assertInstanceOf(TransportInterface::class, $transport);
-    \assertInstanceOf(RedisTransport::class, $transport);
+    assertInstanceOf(TransportInterface::class, $transport);
+    assertInstanceOf(RedisTransport::class, $transport);
 });

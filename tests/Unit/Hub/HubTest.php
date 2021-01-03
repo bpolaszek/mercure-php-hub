@@ -15,6 +15,7 @@ use React\Promise\PromiseInterface;
 use RingCentral\Psr7\ServerRequest;
 
 use function Clue\React\Block\await;
+use function PHPUnit\Framework\assertEquals;
 use function React\Promise\resolve;
 
 $config = new Configuration(
@@ -50,28 +51,28 @@ it('returns 200 when asking for health', function () use ($hub) {
     $request = new ServerRequest('GET', '/.well-known/mercure/health');
     $reflClass = new \ReflectionClass(Hub::class);
     $response = await($hub($request), Factory::create());
-    \assertEquals(200, $response->getStatusCode());
+    assertEquals(200, $response->getStatusCode());
 });
 
 it('returns 404 when resource is not found', function () use ($hub) {
     $request = new ServerRequest('GET', '/foo');
     $reflClass = new \ReflectionClass(Hub::class);
     $response = await($hub($request), Factory::create());
-    \assertEquals(404, $response->getStatusCode());
+    assertEquals(404, $response->getStatusCode());
 });
 
 it('returns 403 when not allowed to publish', function () use ($hub) {
     $request = new ServerRequest('POST', '/.well-known/mercure');
     $reflClass = new \ReflectionClass(Hub::class);
     $response = await($hub($request), Factory::create());
-    \assertEquals(403, $response->getStatusCode());
-    \assertEquals('Invalid auth token.', (string) $response->getBody());
+    assertEquals(403, $response->getStatusCode());
+    assertEquals('Invalid auth token.', (string) $response->getBody());
 });
 
 it('returns 403 when not allowed to subscribe', function () use ($hub) {
     $request = new ServerRequest('GET', '/.well-known/mercure');
     $reflClass = new \ReflectionClass(Hub::class);
     $response = await($hub($request), Factory::create());
-    \assertEquals(403, $response->getStatusCode());
-    \assertEquals('Anonymous subscriptions are not allowed on this hub.', (string) $response->getBody());
+    assertEquals(403, $response->getStatusCode());
+    assertEquals('Anonymous subscriptions are not allowed on this hub.', (string) $response->getBody());
 });

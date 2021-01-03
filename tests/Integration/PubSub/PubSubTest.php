@@ -16,6 +16,9 @@ use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Component\Process\Process;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
+use function PHPUnit\Framework\assertCount;
+use function PHPUnit\Framework\assertEquals;
+
 function createJWT(array $claims, string $key): Token
 {
     $builder = new Builder();
@@ -51,46 +54,42 @@ function publish(HttpClientInterface $client, UriInterface $publishUrl, Token $t
     }
 }
 
-$url = null;
+$url = new Uri(sprintf("http://%s", $_SERVER['ADDR']));
+$transport = $_SERVER['TRANSPORT_URL'] ?? null;
 $process = null;
 
-beforeAll(function () use (&$url, &$process) {
-    $url = new Uri(sprintf("http://%s", \getenv('ADDR')));
-    $transport = \getenv('TRANSPORT_URL');
-    if (false === $transport) {
+beforeAll(function () use ($transport, &$process) {
+    if (null === $transport) {
         throw new \RuntimeException('Cannot run test, missing TRANSPORT_URL env var.');
     }
-    $process = new Process(['bin/mercure'], \dirname(__DIR__, 3), [
-        'TRANSPORT_URL' => $transport,
-    ]);
-    $process->setTimeout(60);
-    $process->setIdleTimeout(60);
+    $process = new Process(['bin/mercure'], \dirname(__DIR__, 3));
+    $process->setTimeout(15);
+    $process->setIdleTimeout(15);
     $process->start();
     \sleep(1);
 });
 
 afterAll(function () use (&$process) {
-    $process->stop();
-    \sleep(1);
+    $process->stop(1, \SIGINT);
 });
 
-it('returns a 200 status code on health check', function () use (&$url) {
+it('returns a 200 status code on health check', function () use ($url) {
     $response = HttpClient::create()->request('GET', $url->withPath('/.well-known/mercure/health'));
-    \assertEquals(200, $response->getStatusCode());
+    assertEquals(200, $response->getStatusCode());
 });
 
-it('returns 404 on unknown urls', function () use (&$url) {
+it('returns 404 on unknown urls', function () use ($url) {
     $response = HttpClient::create()->request('GET', $url->withPath('/foo'));
-    \assertEquals(404, $response->getStatusCode());
+    assertEquals(404, $response->getStatusCode());
 });
 
-it('receives updates in real time', function () use (&$url) {
+it('receives updates in real time', function () use ($url) {
 
     for ($uuids = [], $i = 1; $i <= 3; $i++) {
         $uuids[] = (string) Uuid::uuid4();
     }
 
-    $token = createJWT(['mercure' => ['publish' => ['*']]], \getenv('JWT_KEY'));
+    $token = createJWT(['mercure' => ['publish' => ['*']]], $_SERVER['JWT_KEY']);
     $client = HttpClient::create();
     $subscribeUrl = $url->withPath('/.well-known/mercure')->withQuery('topic=/foo&topic=/foobar/{id}');
     $publishUrl = $url->withPath('/.well-known/mercure');
@@ -136,15 +135,15 @@ it('receives updates in real time', function () use (&$url) {
             $publishResponses[$id] = $content;
         }
     });
-    $loop->addTimer(4, fn() => $eventSource->close());
+    $loop->addTimer(0.5, fn() => $eventSource->close());
     $loop->run();
 
     foreach ($expectedPublishResponse as $id => $expectedResponse) {
-        \assertEquals($expectedResponse, $publishResponses[$id]);
+        assertEquals($expectedResponse, $publishResponses[$id]);
     }
 
-    \assertCount(\count($receivedEvents), $expectedReceivedEvents);
+    assertCount(\count($receivedEvents), $expectedReceivedEvents);
     foreach ($expectedReceivedEvents as $id => $expectedEvent) {
-        \assertEquals($expectedEvent, $receivedEvents[$id]);
+        assertEquals($expectedEvent, $receivedEvents[$id]);
     }
 });

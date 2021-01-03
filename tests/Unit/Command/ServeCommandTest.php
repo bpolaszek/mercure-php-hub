@@ -8,6 +8,7 @@ use React\EventLoop\Factory;
 use Symfony\Component\Console\Tester\CommandTester;
 
 use function BenTools\MercurePHP\without_nullish_values;
+use function PHPUnit\Framework\assertStringContainsString;
 
 it('serves a Mercure Hub', function () {
     $loop = Factory::create();
@@ -16,9 +17,9 @@ it('serves a Mercure Hub', function () {
     $command = new ServeCommand($configuration, $loop);
     $tester = new CommandTester($command);
     $tester->execute([
-        '--jwt-key' => \getenv('JWT_KEY'),
-        '--addr' => \getenv('ADDR'),
+        '--jwt-key' => $_SERVER['JWT_KEY'],
+        '--addr' => $_SERVER['ADDR'],
     ]);
     $output = $tester->getDisplay();
-    \assertStringContainsString('[info] Server running at http://' . \getenv('ADDR'), $output);
+    assertStringContainsString('[info] Server running at http://' . $_SERVER['ADDR'], $output);
 });
