@@ -43,6 +43,7 @@
         "symfony/dotenv": "^5.2",
         "symfony/flex": "^1.11.0",
         "symfony/framework-bundle": "^5.2",
+        "symfony/monolog-bundle": "^3.7",
         "symfony/string": "^5.2",
         "symfony/yaml": "^5.2"
     },
