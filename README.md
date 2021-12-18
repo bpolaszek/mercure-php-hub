@@ -4,12 +4,9 @@
 
 # Mercure PHP Hub
 
-This POC is a PHP implementation of the [Mercure Hub Specification](https://mercure.rocks/spec).
+This POC was a PHP implementation of the [Mercure Hub Specification](https://mercure.rocks/spec).
 
-It is blazing fast, built on top of [ReactPHP](https://reactphp.org/) and optionally leverages a 
-[Redis](https://redis.io/) server for scaling.
-
-It is currently experimental and production use is at your own risk, but feel free to play and improve it!
+This repository will no longer be maintained, as I recently released [Freddie](https://github.com/bpolaszek/freddie), which is a brand new implementation leveraging [Framework X](https://framework-x.org/) (still using ReactPHP under the hood).
 
 ## Installation
 
